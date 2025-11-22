@@ -1,3 +1,5 @@
+from typing import Any
+
 import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -66,8 +68,8 @@ async def get_file(path: str) -> FileContent | None:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/vault/file", response_model=dict)
-async def create_file(request: FileCreate) -> dict:
+@router.post("/vault/file", response_model=dict[str, str])
+async def create_file(request: FileCreate) -> dict[str, str]:
     """Create a new file in the vault."""
     try:
         client = get_github_vault_client()
@@ -95,8 +97,8 @@ async def create_file(request: FileCreate) -> dict:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/vault/file", response_model=dict)
-async def update_file(path: str, request: FileUpdate) -> dict:
+@router.put("/vault/file", response_model=dict[str, str])
+async def update_file(path: str, request: FileUpdate) -> dict[str, str]:
     """Update an existing file in the vault."""
     try:
         client = get_github_vault_client()

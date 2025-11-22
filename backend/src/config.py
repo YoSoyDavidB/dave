@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     github_repo: str = ""  # format: "username/repo"
     vault_path_prefix: str = "David's Notes"  # root folder in repo
 
+    # Database
+    database_url: str = "postgresql+asyncpg://localhost:5432/dave"
+
     # Redis
     redis_url: str = "redis://localhost:6379"
 

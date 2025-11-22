@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime
+from typing import Any
 
 import httpx
 import structlog
@@ -33,7 +34,7 @@ class GitHubVaultClient:
             "X-GitHub-Api-Version": "2022-11-28",
         }
 
-    async def get_file(self, path: str) -> dict | None:
+    async def get_file(self, path: str) -> dict[str, Any] | None:
         """Get a file from the vault.
 
         Returns dict with 'content' and 'sha' or None if not found.
@@ -67,7 +68,7 @@ class GitHubVaultClient:
         path: str,
         content: str,
         message: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Create a new file in the vault."""
         full_path = self._full_path(path)
         if message is None:
@@ -88,7 +89,8 @@ class GitHubVaultClient:
             response.raise_for_status()
 
             logger.info("vault_file_created", path=path)
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
     async def update_file(
         self,
@@ -96,7 +98,7 @@ class GitHubVaultClient:
         content: str,
         sha: str,
         message: str | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Update an existing file in the vault."""
         full_path = self._full_path(path)
         if message is None:
@@ -118,9 +120,10 @@ class GitHubVaultClient:
             response.raise_for_status()
 
             logger.info("vault_file_updated", path=path)
-            return response.json()
+            result: dict[str, Any] = response.json()
+            return result
 
-    async def list_directory(self, path: str = "") -> list[dict]:
+    async def list_directory(self, path: str = "") -> list[dict[str, str]]:
         """List files in a directory."""
         full_path = self._full_path(path)
         async with httpx.AsyncClient() as client:
@@ -137,7 +140,7 @@ class GitHubVaultClient:
             data = response.json()
 
             # Filter to only markdown files and directories
-            items = []
+            items: list[dict[str, str]] = []
             for item in data:
                 if item["type"] == "dir" or item["name"].endswith(".md"):
                     items.append({
@@ -149,7 +152,7 @@ class GitHubVaultClient:
             logger.info("vault_directory_listed", path=path, count=len(items))
             return items
 
-    async def search_files(self, query: str) -> list[dict]:
+    async def search_files(self, query: str) -> list[dict[str, str]]:
         """Search for files in the vault."""
         async with httpx.AsyncClient() as client:
             response = await client.get(
@@ -164,7 +167,7 @@ class GitHubVaultClient:
             response.raise_for_status()
             data = response.json()
 
-            results = []
+            results: list[dict[str, str]] = []
             for item in data.get("items", []):
                 results.append({
                     "name": item["name"],

@@ -1,19 +1,26 @@
 """Vault tools for the AI agent."""
 
+from typing import Any
 
 from src.infrastructure.github_vault import get_github_vault_client
 
 # Tool definitions for OpenRouter/Claude
-VAULT_TOOLS = [
+VAULT_TOOLS: list[dict[str, Any]] = [
     {
         "name": "read_note",
-        "description": "Read a note from the user's Obsidian vault. Use this to access existing notes, daily notes, or any markdown file.",
+        "description": (
+            "Read a note from the user's Obsidian vault. "
+            "Use this to access existing notes, daily notes, or any markdown file."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Path to the note relative to vault root. Examples: 'Inbox/quick-note.md', 'Area/Terapia/autoregistro.md'"
+                    "description": (
+                        "Path to the note relative to vault root. "
+                        "Examples: 'Inbox/quick-note.md', 'Area/Terapia/autoregistro.md'"
+                    )
                 }
             },
             "required": ["path"]
@@ -21,7 +28,10 @@ VAULT_TOOLS = [
     },
     {
         "name": "read_daily_note",
-        "description": "Read today's daily note from the vault. Use this when the user asks about their day, tasks, or daily activities.",
+        "description": (
+            "Read today's daily note from the vault. "
+            "Use this when the user asks about their day, tasks, or daily activities."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {},
@@ -30,13 +40,19 @@ VAULT_TOOLS = [
     },
     {
         "name": "create_note",
-        "description": "Create a new note in the user's Obsidian vault. Use this to help organize thoughts, create tasks, or save information.",
+        "description": (
+            "Create a new note in the user's Obsidian vault. "
+            "Use this to help organize thoughts, create tasks, or save information."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Path for the new note. Examples: 'Inbox/meeting-notes.md', 'Project/Personal/idea.md'"
+                    "description": (
+                        "Path for the new note. "
+                        "Examples: 'Inbox/meeting-notes.md', 'Project/Personal/idea.md'"
+                    )
                 },
                 "content": {
                     "type": "string",
@@ -48,13 +64,19 @@ VAULT_TOOLS = [
     },
     {
         "name": "list_directory",
-        "description": "List files and folders in a vault directory. Use to explore the vault structure or find specific notes.",
+        "description": (
+            "List files and folders in a vault directory. "
+            "Use to explore the vault structure or find specific notes."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "path": {
                     "type": "string",
-                    "description": "Directory path. Use '' for root. Examples: 'Inbox', 'Project/Personal'"
+                    "description": (
+                        "Directory path. Use '' for root. "
+                        "Examples: 'Inbox', 'Project/Personal'"
+                    )
                 }
             },
             "required": []
@@ -62,7 +84,10 @@ VAULT_TOOLS = [
     },
     {
         "name": "search_vault",
-        "description": "Search for notes in the vault by content or filename. Use when looking for specific information.",
+        "description": (
+            "Search for notes in the vault by content or filename. "
+            "Use when looking for specific information."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
@@ -76,13 +101,19 @@ VAULT_TOOLS = [
     },
     {
         "name": "append_to_daily_note",
-        "description": "Add content to today's daily note. Use for quick capture, adding tasks, or logging activities.",
+        "description": (
+            "Add content to today's daily note. "
+            "Use for quick capture, adding tasks, or logging activities."
+        ),
         "input_schema": {
             "type": "object",
             "properties": {
                 "section": {
                     "type": "string",
-                    "description": "Section to append to: 'quick_capture', 'notes', 'tasks', 'gastos'"
+                    "description": (
+                        "Section to append to: "
+                        "'quick_capture', 'notes', 'tasks', 'gastos'"
+                    )
                 },
                 "content": {
                     "type": "string",
@@ -95,7 +126,7 @@ VAULT_TOOLS = [
 ]
 
 
-async def execute_tool(tool_name: str, tool_input: dict) -> str:
+async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
     """Execute a vault tool and return the result."""
     client = get_github_vault_client()
 
@@ -103,14 +134,14 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
         result = await client.get_file(tool_input["path"])
         if result is None:
             return f"Note not found: {tool_input['path']}"
-        return result["content"]
+        return str(result["content"])
 
     elif tool_name == "read_daily_note":
         path = await client.get_daily_note_path()
         result = await client.get_file(path)
         if result is None:
             return f"Daily note not found for today. Path would be: {path}"
-        return result["content"]
+        return str(result["content"])
 
     elif tool_name == "create_note":
         existing = await client.get_file(tool_input["path"])
@@ -127,11 +158,11 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
         items = await client.list_directory(path)
         if not items:
             return f"Empty or not found: {path}"
-        result = []
+        lines: list[str] = []
         for item in items:
             icon = "📁" if item["type"] == "dir" else "📄"
-            result.append(f"{icon} {item['name']}")
-        return "\n".join(result)
+            lines.append(f"{icon} {item['name']}")
+        return "\n".join(lines)
 
     elif tool_name == "search_vault":
         results = await client.search_files(tool_input["query"])
@@ -145,7 +176,7 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
         if note is None:
             return "Daily note not found for today"
 
-        content = note["content"]
+        content = str(note["content"])
         section = tool_input.get("section", "quick_capture")
         new_content = tool_input.get("content", "")
 
@@ -187,7 +218,7 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
                 await client.update_file(
                     path=path,
                     content=updated,
-                    sha=note["sha"],
+                    sha=str(note["sha"]),
                 )
                 return f"Added to {section}: {new_content}"
 

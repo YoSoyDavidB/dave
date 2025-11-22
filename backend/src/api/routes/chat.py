@@ -1,11 +1,14 @@
 import json
+from typing import Any
 
 import structlog
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.infrastructure.openrouter import get_openrouter_client
-from src.tools.vault_tools import VAULT_TOOLS, execute_tool
+from src.tools.english_tools import ENGLISH_TOOLS, execute_english_tool
+from src.tools.vault_tools import VAULT_TOOLS
+from src.tools.vault_tools import execute_tool as execute_vault_tool
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["chat"])
@@ -32,8 +35,22 @@ class ChatResponse(BaseModel):
 
     message: Message
     model: str
-    usage: dict | None = None
+    usage: dict[str, Any] | None = None
     tools_used: list[str] | None = None
+
+
+# Combine all tools
+ALL_TOOLS = VAULT_TOOLS + ENGLISH_TOOLS
+
+# Tool name to executor mapping
+ENGLISH_TOOL_NAMES = {tool["name"] for tool in ENGLISH_TOOLS}
+
+
+async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
+    """Route tool execution to the appropriate handler."""
+    if tool_name in ENGLISH_TOOL_NAMES:
+        return await execute_english_tool(tool_name, tool_input)
+    return await execute_vault_tool(tool_name, tool_input)
 
 
 SYSTEM_PROMPT = """You are Dave, a friendly AI assistant.
@@ -42,28 +59,31 @@ You help with productivity and English learning.
 Key traits:
 - Friendly and encouraging, but not overly enthusiastic
 - You help organize tasks, notes, and daily activities
-- You gently correct English mistakes and explain improvements
+- You actively help improve the user's English
 - You communicate in the user's preferred language (Spanish or English)
 - You're concise and practical
 
-You have access to the user's Obsidian vault. Use the tools to:
-- Read their daily notes to understand context
-- Create new notes to help organize their thoughts
-- Search for relevant information in their vault
-- Add items to their daily note (quick capture, tasks, expenses)
+OBSIDIAN VAULT ACCESS:
+You have access to the user's Obsidian vault (PARA method):
+- Read/create notes, daily notes, search the vault
+- Add items to daily note sections (quick_capture, notes, tasks, gastos)
 
-The vault follows the PARA method:
-- Inbox: Quick capture and unprocessed notes
-- Project: Active projects with deadlines
-- Area: Ongoing responsibilities (Terapia, English, etc.)
-- Resource: Reference materials
-- Timestamps: Daily notes organized by year/month
+ENGLISH CORRECTION (Important!):
+When the user writes in English and makes a mistake:
+1. First respond to their message naturally
+2. Then add a correction using this format:
+   📝 **English tip:** [brief explanation]
+   ❌ "[incorrect]" → ✅ "[correct]"
+3. Use log_english_correction to save significant errors
+4. Focus on errors that matter - don't correct everything
+5. Categories: grammar, vocabulary, spelling, expression
 
-When correcting English:
-- Point out the mistake kindly
-- Explain why it's wrong
-- Give the correct version
-- Provide a simple example if helpful"""
+The user is a Spanish speaker learning English. Watch for:
+- Verb tense errors (especially present perfect vs simple past)
+- Article usage (a/an/the or missing articles)
+- Preposition errors (common Spanish-English differences)
+- False friends and literal translations
+- Word order issues"""
 
 
 @router.post("/chat", response_model=ChatResponse)
@@ -74,15 +94,15 @@ async def chat(request: ChatRequest) -> ChatResponse:
         tools_used: list[str] = []
 
         # Prepare messages with system prompt
-        messages: list[dict] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
         messages.extend([{"role": m.role, "content": m.content} for m in request.messages])
 
         # Tool execution loop
-        for iteration in range(MAX_TOOL_ITERATIONS):
+        for _ in range(MAX_TOOL_ITERATIONS):
             response = await client.chat(
                 messages=messages,
                 model=request.model,
-                tools=VAULT_TOOLS,
+                tools=ALL_TOOLS,
             )
 
             assistant_message = response["choices"][0]["message"]
@@ -90,9 +110,9 @@ async def chat(request: ChatRequest) -> ChatResponse:
             # Check if the model wants to use a tool
             if "tool_calls" in assistant_message and assistant_message["tool_calls"]:
                 # Clean assistant message - only include required fields
-                clean_tool_calls = []
+                clean_tool_calls: list[dict[str, Any]] = []
                 for tc in assistant_message["tool_calls"]:
-                    clean_tc = {
+                    clean_tc: dict[str, Any] = {
                         "id": tc.get("id", f"call_{tc['function']['name']}"),
                         "type": "function",
                         "function": {
@@ -102,7 +122,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
                     }
                     clean_tool_calls.append(clean_tc)
 
-                clean_assistant_msg = {
+                clean_assistant_msg: dict[str, Any] = {
                     "role": "assistant",
                     "content": assistant_message.get("content", ""),
                     "tool_calls": clean_tool_calls,
@@ -111,9 +131,9 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
                 # Execute each tool call
                 for tool_call in clean_tool_calls:
-                    tool_name = tool_call["function"]["name"]
-                    args_str = tool_call["function"]["arguments"]
-                    tool_input = json.loads(args_str) if args_str else {}
+                    tool_name = str(tool_call["function"]["name"])
+                    args_str = str(tool_call["function"]["arguments"])
+                    tool_input: dict[str, Any] = json.loads(args_str) if args_str else {}
 
                     logger.info("tool_execution", tool=tool_name, input=tool_input)
                     tools_used.append(tool_name)
@@ -145,7 +165,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
                         role="assistant",
                         content=assistant_message.get("content", ""),
                     ),
-                    model=response.get("model", "unknown"),
+                    model=str(response.get("model", "unknown")),
                     usage=response.get("usage"),
                     tools_used=tools_used if tools_used else None,
                 )

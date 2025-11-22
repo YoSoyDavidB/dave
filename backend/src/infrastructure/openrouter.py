@@ -1,4 +1,5 @@
 from collections.abc import AsyncIterator
+from typing import Any
 
 import httpx
 import structlog
@@ -19,11 +20,11 @@ class OpenRouterClient:
 
     async def chat(
         self,
-        messages: list[dict],
+        messages: list[dict[str, Any]],
         model: str | None = None,
         stream: bool = False,
-        tools: list[dict] | None = None,
-    ) -> dict | AsyncIterator[str]:
+        tools: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
         """Send a chat completion request to OpenRouter."""
         model = model or self.default_model
 
@@ -34,7 +35,7 @@ class OpenRouterClient:
             "X-Title": "Dave AI Assistant",
         }
 
-        payload: dict = {
+        payload: dict[str, Any] = {
             "model": model,
             "messages": messages,
             "stream": stream,
@@ -47,7 +48,7 @@ class OpenRouterClient:
 
         async with httpx.AsyncClient() as client:
             if stream:
-                return self._stream_response(client, headers, payload)
+                raise NotImplementedError("Streaming not yet supported")
             else:
                 response = await client.post(
                     f"{self.base_url}/chat/completions",
@@ -56,7 +57,7 @@ class OpenRouterClient:
                     timeout=60.0,
                 )
                 response.raise_for_status()
-                data = response.json()
+                data: dict[str, Any] = response.json()
                 logger.info(
                     "chat_completion",
                     model=model,
@@ -67,8 +68,8 @@ class OpenRouterClient:
     async def _stream_response(
         self,
         client: httpx.AsyncClient,
-        headers: dict,
-        payload: dict,
+        headers: dict[str, str],
+        payload: dict[str, Any],
     ) -> AsyncIterator[str]:
         """Stream response chunks from OpenRouter."""
         async with client.stream(

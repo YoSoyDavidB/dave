@@ -17,6 +17,9 @@ structlog = "^23.2.0"
 python-dotenv = "^1.0.0"
 redis = "^5.0.1"
 tenacity = "^8.2.3"
+sqlalchemy = "^2.0.44"
+asyncpg = "^0.30.0"
+greenlet = "^3.2.4"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^7.4.3"

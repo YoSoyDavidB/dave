@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes import chat, health, vault
 from src.config import get_settings
+from src.infrastructure.database import init_db
 
 # Configure structured logging
 structlog.configure(
@@ -56,6 +57,8 @@ def create_app() -> FastAPI:
 
     @app.on_event("startup")
     async def startup_event() -> None:
+        # Initialize database tables
+        await init_db()
         logger.info("application_started", app_name=settings.app_name)
 
     @app.on_event("shutdown")
