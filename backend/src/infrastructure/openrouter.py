@@ -19,9 +19,10 @@ class OpenRouterClient:
 
     async def chat(
         self,
-        messages: list[dict[str, str]],
+        messages: list[dict],
         model: str | None = None,
         stream: bool = False,
+        tools: list[dict] | None = None,
     ) -> dict | AsyncIterator[str]:
         """Send a chat completion request to OpenRouter."""
         model = model or self.default_model
@@ -33,11 +34,16 @@ class OpenRouterClient:
             "X-Title": "Dave AI Assistant",
         }
 
-        payload = {
+        payload: dict = {
             "model": model,
             "messages": messages,
             "stream": stream,
         }
+
+        if tools:
+            payload["tools"] = [
+                {"type": "function", "function": tool} for tool in tools
+            ]
 
         async with httpx.AsyncClient() as client:
             if stream:
