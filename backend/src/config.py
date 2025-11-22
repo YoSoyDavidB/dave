@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     # GitHub (for Obsidian vault)
     github_token: str = ""
     github_repo: str = ""  # format: "username/repo"
+    vault_path_prefix: str = "David's Notes"  # root folder in repo
 
     # Redis
     redis_url: str = "redis://localhost:6379"

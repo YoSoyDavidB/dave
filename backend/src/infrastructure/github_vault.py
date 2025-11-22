@@ -16,7 +16,14 @@ class GitHubVaultClient:
         settings = get_settings()
         self.token = settings.github_token
         self.repo = settings.github_repo  # format: "username/repo"
+        self.vault_prefix = settings.vault_path_prefix
         self.base_url = "https://api.github.com"
+
+    def _full_path(self, path: str) -> str:
+        """Get full path including vault prefix."""
+        if self.vault_prefix:
+            return f"{self.vault_prefix}/{path}" if path else self.vault_prefix
+        return path
 
     @property
     def headers(self) -> dict[str, str]:
@@ -31,9 +38,10 @@ class GitHubVaultClient:
 
         Returns dict with 'content' and 'sha' or None if not found.
         """
+        full_path = self._full_path(path)
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{self.base_url}/repos/{self.repo}/contents/{path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
                 headers=self.headers,
                 timeout=30.0,
             )
@@ -61,6 +69,7 @@ class GitHubVaultClient:
         message: str | None = None,
     ) -> dict:
         """Create a new file in the vault."""
+        full_path = self._full_path(path)
         if message is None:
             message = f"Create {path} via Dave"
 
@@ -68,7 +77,7 @@ class GitHubVaultClient:
 
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{self.base_url}/repos/{self.repo}/contents/{path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
                 headers=self.headers,
                 json={
                     "message": message,
@@ -89,6 +98,7 @@ class GitHubVaultClient:
         message: str | None = None,
     ) -> dict:
         """Update an existing file in the vault."""
+        full_path = self._full_path(path)
         if message is None:
             message = f"Update {path} via Dave"
 
@@ -96,7 +106,7 @@ class GitHubVaultClient:
 
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{self.base_url}/repos/{self.repo}/contents/{path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
                 headers=self.headers,
                 json={
                     "message": message,
@@ -112,9 +122,10 @@ class GitHubVaultClient:
 
     async def list_directory(self, path: str = "") -> list[dict]:
         """List files in a directory."""
+        full_path = self._full_path(path)
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{self.base_url}/repos/{self.repo}/contents/{path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
                 headers=self.headers,
                 timeout=30.0,
             )
@@ -168,7 +179,7 @@ class GitHubVaultClient:
         if date is None:
             date = datetime.now()
 
-        # Format: Timestamps/YYYY/MM - Month/YYYY-MM-DD Day.md
+        # Format: Timestamps/YYYY/MM-Month/YYYY-MM-DD Day.md
         month_names = [
             "", "January", "February", "March", "April", "May", "June",
             "July", "August", "September", "October", "November", "December"
@@ -184,7 +195,7 @@ class GitHubVaultClient:
         day = date.strftime("%Y-%m-%d")
         day_name = day_names[date.weekday()]
 
-        return f"Timestamps/{year}/{month_num} - {month_name}/{day} {day_name}.md"
+        return f"Timestamps/{year}/{month_num}-{month_name}/{day}-{day_name}.md"
 
 
 def get_github_vault_client() -> GitHubVaultClient:
