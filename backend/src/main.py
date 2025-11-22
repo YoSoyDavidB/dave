@@ -2,7 +2,7 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import chat, health
+from src.api.routes import chat, health, vault
 from src.config import get_settings
 
 # Configure structured logging
@@ -52,6 +52,7 @@ def create_app() -> FastAPI:
     # Include routers
     app.include_router(health.router, prefix=settings.api_prefix)
     app.include_router(chat.router, prefix=settings.api_prefix)
+    app.include_router(vault.router, prefix=settings.api_prefix)
 
     @app.on_event("startup")
     async def startup_event() -> None:
