@@ -89,19 +89,41 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
             # Check if the model wants to use a tool
             if "tool_calls" in assistant_message and assistant_message["tool_calls"]:
-                # Add assistant message with tool calls
-                messages.append(assistant_message)
+                # Clean assistant message - only include required fields
+                clean_tool_calls = []
+                for tc in assistant_message["tool_calls"]:
+                    clean_tc = {
+                        "id": tc.get("id", f"call_{tc['function']['name']}"),
+                        "type": "function",
+                        "function": {
+                            "name": tc["function"]["name"],
+                            "arguments": tc["function"].get("arguments", "{}"),
+                        },
+                    }
+                    clean_tool_calls.append(clean_tc)
+
+                clean_assistant_msg = {
+                    "role": "assistant",
+                    "content": assistant_message.get("content", ""),
+                    "tool_calls": clean_tool_calls,
+                }
+                messages.append(clean_assistant_msg)
 
                 # Execute each tool call
-                for tool_call in assistant_message["tool_calls"]:
+                for tool_call in clean_tool_calls:
                     tool_name = tool_call["function"]["name"]
-                    tool_input = json.loads(tool_call["function"]["arguments"])
+                    args_str = tool_call["function"]["arguments"]
+                    tool_input = json.loads(args_str) if args_str else {}
 
                     logger.info("tool_execution", tool=tool_name, input=tool_input)
                     tools_used.append(tool_name)
 
                     # Execute the tool
                     result = await execute_tool(tool_name, tool_input)
+
+                    # Truncate very long results to avoid API limits
+                    if len(result) > 10000:
+                        result = result[:10000] + "\n\n[Content truncated...]"
 
                     # Add tool result to messages
                     messages.append({

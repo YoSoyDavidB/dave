@@ -146,8 +146,11 @@ async def execute_tool(tool_name: str, tool_input: dict) -> str:
             return "Daily note not found for today"
 
         content = note["content"]
-        section = tool_input["section"]
-        new_content = tool_input["content"]
+        section = tool_input.get("section", "quick_capture")
+        new_content = tool_input.get("content", "")
+
+        if not new_content:
+            return "Error: No content provided to add"
 
         # Find section and append
         section_markers = {

@@ -16,7 +16,7 @@ class Settings(BaseSettings):
     # OpenRouter
     openrouter_api_key: str = ""
     openrouter_base_url: str = "https://openrouter.ai/api/v1"
-    default_model: str = "anthropic/claude-3.5-sonnet"
+    default_model: str = "anthropic/claude-sonnet-4.5"
 
     # GitHub (for Obsidian vault)
     github_token: str = ""

@@ -22,7 +22,7 @@ def test_chat_endpoint_success(client: TestClient) -> None:
                 }
             }
         ],
-        "model": "anthropic/claude-3-sonnet",
+        "model": "anthropic/claude-sonnet-4.5",
         "usage": {"prompt_tokens": 10, "completion_tokens": 8, "total_tokens": 18},
     }
 
@@ -42,7 +42,7 @@ def test_chat_endpoint_success(client: TestClient) -> None:
         data = response.json()
         assert data["message"]["role"] == "assistant"
         assert data["message"]["content"] == "Hello! How can I help you today?"
-        assert data["model"] == "anthropic/claude-3-sonnet"
+        assert data["model"] == "anthropic/claude-sonnet-4.5"
 
 
 def test_chat_endpoint_with_history(client: TestClient) -> None:
@@ -56,7 +56,7 @@ def test_chat_endpoint_with_history(client: TestClient) -> None:
                 }
             }
         ],
-        "model": "anthropic/claude-3-sonnet",
+        "model": "anthropic/claude-sonnet-4.5",
         "usage": {"prompt_tokens": 20, "completion_tokens": 5, "total_tokens": 25},
     }
 
