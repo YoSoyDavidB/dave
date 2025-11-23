@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <!-- Main gradient for the orb -->
+    <radialGradient id="orbGradient" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#F0FF3D" stop-opacity="1"/>
+      <stop offset="50%" stop-color="#c8e600" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#9cb800" stop-opacity="0.7"/>
+    </radialGradient>
+
+    <!-- Glow effect -->
+    <radialGradient id="glowGradient" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#F0FF3D" stop-opacity="0.4"/>
+      <stop offset="70%" stop-color="#F0FF3D" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#F0FF3D" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Inner highlight -->
+    <radialGradient id="highlightGradient" cx="35%" cy="35%" r="40%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Teal accent -->
+    <radialGradient id="tealAccent" cx="70%" cy="70%" r="40%">
+      <stop offset="0%" stop-color="#00d4aa" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#00d4aa" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Filter for soft glow -->
+    <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1"/>
+    </filter>
+  </defs>
+
+  <!-- Outer glow -->
+  <circle cx="16" cy="16" r="14" fill="url(#glowGradient)" filter="url(#softGlow)"/>
+
+  <!-- Main orb -->
+  <circle cx="16" cy="16" r="11" fill="url(#orbGradient)"/>
+
+  <!-- Teal accent overlay -->
+  <circle cx="16" cy="16" r="11" fill="url(#tealAccent)"/>
+
+  <!-- Inner highlight (glass effect) -->
+  <circle cx="16" cy="16" r="11" fill="url(#highlightGradient)"/>
+
+  <!-- Subtle inner ring -->
+  <circle cx="16" cy="16" r="9" fill="none" stroke="#F0FF3D" stroke-width="0.5" stroke-opacity="0.3"/>
+</svg>

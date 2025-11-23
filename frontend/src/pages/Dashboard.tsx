@@ -26,7 +26,7 @@ export default function Dashboard() {
           Common Errors
         </h2>
         <p className="text-gray-500">
-          Start chatting with Buddy to track your English progress!
+          Start chatting with Dave to track your English progress!
         </p>
       </div>
     </div>
