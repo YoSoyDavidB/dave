@@ -1,13 +1,16 @@
+import asyncio
 import json
 from collections.abc import AsyncIterator
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from src.infrastructure.openrouter import get_openrouter_client
+from src.infrastructure.vector_store.memory_repository import get_memory_repository
+from src.application.use_cases.memory_extraction import get_memory_extraction_use_case
 from src.tools.english_tools import ENGLISH_TOOLS, execute_english_tool
 from src.tools.vault_tools import VAULT_TOOLS
 from src.tools.vault_tools import execute_tool as execute_vault_tool
@@ -30,6 +33,8 @@ class ChatRequest(BaseModel):
 
     messages: list[Message]
     model: str | None = None
+    user_id: str | None = None  # For memory features
+    conversation_id: str | None = None  # For memory extraction source
 
 
 class ChatResponse(BaseModel):
@@ -53,6 +58,66 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
     if tool_name in ENGLISH_TOOL_NAMES:
         return await execute_english_tool(tool_name, tool_input)
     return await execute_vault_tool(tool_name, tool_input)
+
+
+async def get_memory_context(user_id: str, query: str) -> str:
+    """Retrieve relevant memories for context injection.
+
+    Args:
+        user_id: User to get memories for
+        query: The user's current message for relevance matching
+
+    Returns:
+        Formatted memory context string
+    """
+    try:
+        memory_repo = get_memory_repository()
+        memories = await memory_repo.search_similar(
+            query=query,
+            user_id=user_id,
+            limit=5,
+            min_score=0.6,  # Lower threshold to catch more relevant memories
+        )
+
+        if not memories:
+            return ""
+
+        # Format memories for context
+        lines = ["## What you remember about the user:"]
+        for memory, score in memories:
+            lines.append(f"- [{memory.memory_type.value}] {memory.short_text}")
+
+            # Mark memory as referenced (boosts relevance)
+            await memory_repo.mark_referenced(memory.memory_id)
+
+        return "\n".join(lines)
+
+    except Exception as e:
+        logger.warning("memory_retrieval_failed", error=str(e))
+        return ""
+
+
+async def extract_memories_background(
+    messages: list[dict[str, str]],
+    user_id: str,
+    conversation_id: str,
+) -> None:
+    """Background task to extract memories from conversation.
+
+    Args:
+        messages: Conversation messages
+        user_id: User who owns the memories
+        conversation_id: Source conversation
+    """
+    try:
+        extractor = get_memory_extraction_use_case()
+        await extractor.extract_from_conversation(
+            messages=messages,
+            user_id=user_id,
+            conversation_id=conversation_id,
+        )
+    except Exception as e:
+        logger.error("background_memory_extraction_failed", error=str(e))
 
 
 SYSTEM_PROMPT = """You are Dave, an AI assistant who's been the user's best friend since forever.
@@ -130,14 +195,30 @@ Remember: You're helping a friend sound more polished, not grading an exam. Keep
 
 
 @router.post("/chat", response_model=ChatResponse)
-async def chat(request: ChatRequest) -> ChatResponse:
+async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatResponse:
     """Send a message to Dave and get a response (non-streaming)."""
     try:
         client = get_openrouter_client()
         tools_used: list[str] = []
 
+        # Build system prompt with memory context
+        system_prompt = SYSTEM_PROMPT
+
+        # Get last user message for memory search
+        last_user_msg = next(
+            (m.content for m in reversed(request.messages) if m.role == "user"),
+            ""
+        )
+
+        # Inject memory context if user_id provided
+        if request.user_id and last_user_msg:
+            memory_context = await get_memory_context(request.user_id, last_user_msg)
+            if memory_context:
+                system_prompt = f"{SYSTEM_PROMPT}\n\n{memory_context}"
+                logger.debug("memory_context_injected", user_id=request.user_id)
+
         # Prepare messages with system prompt
-        messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+        messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
         messages.extend([{"role": m.role, "content": m.content} for m in request.messages])
 
         # Tool execution loop
@@ -203,10 +284,28 @@ async def chat(request: ChatRequest) -> ChatResponse:
                     tools_used=tools_used,
                 )
 
+                assistant_content = assistant_message.get("content", "")
+
+                # Schedule background memory extraction
+                if request.user_id and request.conversation_id:
+                    # Build conversation for extraction (user messages + final assistant response)
+                    extraction_messages = [
+                        {"role": m.role, "content": m.content}
+                        for m in request.messages
+                    ]
+                    extraction_messages.append({"role": "assistant", "content": assistant_content})
+
+                    background_tasks.add_task(
+                        extract_memories_background,
+                        extraction_messages,
+                        request.user_id,
+                        request.conversation_id,
+                    )
+
                 return ChatResponse(
                     message=Message(
                         role="assistant",
-                        content=assistant_message.get("content", ""),
+                        content=assistant_content,
                     ),
                     model=str(response.get("model", "unknown")),
                     usage=response.get("usage"),
@@ -231,6 +330,8 @@ async def chat(request: ChatRequest) -> ChatResponse:
 async def generate_stream_events(
     messages: list[dict[str, Any]],
     model: str | None,
+    user_id: str | None = None,
+    conversation_id: str | None = None,
 ) -> AsyncIterator[str]:
     """
     Generate Server-Sent Events for streaming chat.
@@ -245,8 +346,24 @@ async def generate_stream_events(
     client = get_openrouter_client()
     tools_used: list[str] = []
 
+    # Build system prompt with memory context
+    system_prompt = SYSTEM_PROMPT
+
+    # Get last user message for memory search
+    last_user_msg = next(
+        (m["content"] for m in reversed(messages) if m.get("role") == "user"),
+        ""
+    )
+
+    # Inject memory context if user_id provided
+    if user_id and last_user_msg:
+        memory_context = await get_memory_context(user_id, last_user_msg)
+        if memory_context:
+            system_prompt = f"{SYSTEM_PROMPT}\n\n{memory_context}"
+            logger.debug("memory_context_injected_stream", user_id=user_id)
+
     # Add system prompt
-    full_messages: list[dict[str, Any]] = [{"role": "system", "content": SYSTEM_PROMPT}]
+    full_messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
     full_messages.extend(messages)
 
     for iteration in range(MAX_TOOL_ITERATIONS):
@@ -280,6 +397,14 @@ async def generate_stream_events(
                     # Check if we have tool calls to execute
                     if not tool_calls_received:
                         # No tools, we're done
+                        # Schedule memory extraction in background
+                        if user_id and conversation_id and accumulated_content:
+                            extraction_msgs = messages.copy()
+                            extraction_msgs.append({"role": "assistant", "content": accumulated_content})
+                            asyncio.create_task(
+                                extract_memories_background(extraction_msgs, user_id, conversation_id)
+                            )
+
                         done_data = {
                             'type': 'done',
                             'tools_used': tools_used if tools_used else None
@@ -372,12 +497,21 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
     - done: {"type": "done", "tools_used": ["tool1", "tool2"]}
     - error: {"type": "error", "error": "error message"}
     """
-    logger.info("chat_stream_request", message_count=len(request.messages))
+    logger.info(
+        "chat_stream_request",
+        message_count=len(request.messages),
+        user_id=request.user_id,
+    )
 
     messages = [{"role": m.role, "content": m.content} for m in request.messages]
 
     return StreamingResponse(
-        generate_stream_events(messages, request.model),
+        generate_stream_events(
+            messages,
+            request.model,
+            user_id=request.user_id,
+            conversation_id=request.conversation_id,
+        ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
