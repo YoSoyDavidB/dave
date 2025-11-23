@@ -1,7 +1,7 @@
 services:
   backend:
     hostname: backend
-    build: ./backend
+    image: ghcr.io/YoSoyDavidB/dave-backend:latest
     ports:
       - "8000:8000"
     environment:
@@ -22,7 +22,7 @@ services:
 
   frontend:
     hostname: frontend
-    build: ./frontend
+    image: ghcr.io/YoSoyDavidB/dave-frontend:latest
     ports:
       - "5173:80"
     depends_on:
@@ -36,15 +36,6 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    restart: unless-stopped
-
-  qdrant:
-    hostname: qdrant
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_data:/qdrant/storage
     restart: unless-stopped
 
 volumes:
