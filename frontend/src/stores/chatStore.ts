@@ -111,7 +111,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
           set({ streamStatus: 'streaming', currentTool: null })
           break
 
-        case 'done':
+        case 'done': {
           // Save assistant message to conversation
           const finalMessages = get().messages
           const finalAssistantMessage = finalMessages[finalMessages.length - 1]
@@ -131,6 +131,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
             abortController: null,
           })
           break
+        }
 
         case 'error':
           set({

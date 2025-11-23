@@ -111,7 +111,6 @@ class OpenRouterClient:
 
                     accumulated_content = ""
                     accumulated_tool_calls: list[dict[str, Any]] = []
-                    current_tool_call: dict[str, Any] | None = None
 
                     async for line in response.aiter_lines():
                         if not line or not line.startswith("data: "):

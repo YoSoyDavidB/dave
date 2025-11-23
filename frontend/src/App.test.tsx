@@ -21,6 +21,6 @@ describe('App', () => {
       </BrowserRouter>
     )
 
-    expect(screen.getByText("Hey! I'm Dave 👋")).toBeInTheDocument()
+    expect(screen.getByText(/Hey there! What can/)).toBeInTheDocument()
   })
 })

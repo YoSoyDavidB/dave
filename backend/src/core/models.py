@@ -1,7 +1,6 @@
+import uuid
 from datetime import datetime
 from enum import Enum
-from typing import Optional
-import uuid
 
 from sqlalchemy import DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -60,7 +59,7 @@ class Conversation(Base):
     )
 
     # Title (auto-generated from first message or set manually)
-    title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    title: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relationship to messages
     messages: Mapped[list["Message"]] = relationship(
@@ -92,8 +91,8 @@ class Message(Base):
     content: Mapped[str] = mapped_column(Text, nullable=False)
 
     # Optional metadata
-    model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    tools_used: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array as string
+    model: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    tools_used: Mapped[str | None] = mapped_column(Text, nullable=True)  # JSON array as string
 
     # Relationship
     conversation: Mapped["Conversation"] = relationship(

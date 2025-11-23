@@ -8,13 +8,13 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from src.core.conversation_service import (
-    create_conversation,
-    get_conversation,
-    get_conversations_grouped,
     add_message,
-    update_conversation_title,
+    create_conversation,
     delete_conversation,
     generate_title_from_message,
+    get_conversation,
+    get_conversations_grouped,
+    update_conversation_title,
 )
 
 logger = structlog.get_logger()
@@ -106,7 +106,12 @@ async def create_new_conversation(request: ConversationCreate) -> ConversationRe
 @router.get("/conversations", response_model=GroupedConversationsResponse)
 async def list_conversations() -> GroupedConversationsResponse:
     """Get all conversations grouped by time period."""
-    groups = await get_conversations_grouped()
+    raw_groups = await get_conversations_grouped()
+    # Convert dict items to ConversationListItem
+    groups = {
+        key: [ConversationListItem(**item) for item in items]
+        for key, items in raw_groups.items()
+    }
     return GroupedConversationsResponse(groups=groups)
 
 

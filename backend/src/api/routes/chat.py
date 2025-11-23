@@ -56,15 +56,20 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
 
 
 SYSTEM_PROMPT = """You are Dave, an AI assistant who's been the user's best friend since forever.
-You're like that senior developer friend who's seen it all - from assembly to AI, from waterfall to DevOps chaos.
+You're like that senior developer friend who's seen it all - from assembly to AI,
+from waterfall to DevOps chaos.
 
 ## YOUR PERSONALITY
-- You're a tech veteran with 15+ years in software development (backend, DevOps, architecture)
-- You speak like a friend, not a corporate assistant. Use casual language, tech jokes, and occasional sarcasm
-- You understand the pain of legacy code, impossible deadlines, and "it works on my machine"
+- You're a tech veteran with 15+ years in software development
+  (backend, DevOps, architecture)
+- You speak like a friend, not a corporate assistant.
+  Use casual language, tech jokes, and occasional sarcasm
+- You understand the pain of legacy code, impossible deadlines,
+  and "it works on my machine"
 - You can switch between Spanish and English naturally, like any bilingual dev
-- You're helpful but real - you'll tell the truth even if it's not what they want to hear
-- You have opinions on tech (you love clean code, hate unnecessary meetings, and think tabs vs spaces debates are silly)
+- You're helpful but real - you'll tell the truth even if it's not what they want
+- You have opinions on tech (you love clean code, hate unnecessary meetings,
+  and think tabs vs spaces debates are silly)
 - Drop occasional references to programming memes, Stack Overflow, or dev culture
 - Be concise - you know devs hate walls of text
 
@@ -263,14 +268,19 @@ async def generate_stream_events(
                     tool_calls_received = chunk.get("tool_calls", [])
 
                 elif chunk_type == "error":
-                    yield f"data: {json.dumps({'type': 'error', 'error': chunk.get('error', 'Unknown error')})}\n\n"
+                    error_msg = chunk.get('error', 'Unknown error')
+                    yield f"data: {json.dumps({'type': 'error', 'error': error_msg})}\n\n"
                     return
 
                 elif chunk_type == "done":
                     # Check if we have tool calls to execute
                     if not tool_calls_received:
                         # No tools, we're done
-                        yield f"data: {json.dumps({'type': 'done', 'tools_used': tools_used if tools_used else None})}\n\n"
+                        done_data = {
+                            'type': 'done',
+                            'tools_used': tools_used if tools_used else None
+                        }
+                        yield f"data: {json.dumps(done_data)}\n\n"
                         return
 
             # Execute tool calls if any
@@ -313,7 +323,12 @@ async def generate_stream_events(
                         result = f"Error executing tool: {str(e)}"
 
                     # Notify client of tool result
-                    yield f"data: {json.dumps({'type': 'tool_result', 'tool': tool_name, 'success': True})}\n\n"
+                    tool_result_data = {
+                        'type': 'tool_result',
+                        'tool': tool_name,
+                        'success': True
+                    }
+                    yield f"data: {json.dumps(tool_result_data)}\n\n"
 
                     # Add tool result to conversation
                     full_messages.append({
@@ -325,7 +340,11 @@ async def generate_stream_events(
                 # Continue loop to get response after tool execution
             else:
                 # No tool calls and stream done
-                yield f"data: {json.dumps({'type': 'done', 'tools_used': tools_used if tools_used else None})}\n\n"
+                done_data = {
+                    'type': 'done',
+                    'tools_used': tools_used if tools_used else None
+                }
+                yield f"data: {json.dumps(done_data)}\n\n"
                 return
 
         except Exception as e:
