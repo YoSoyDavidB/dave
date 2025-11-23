@@ -36,6 +36,7 @@ from src.infrastructure.vector_store.result_reranker import (
 # Chunking Tests
 # ============================================================================
 
+
 class TestEstimateTokens:
     """Tests for token estimation."""
 
@@ -154,6 +155,7 @@ class TestChunkDocument:
 # Result Reranker Tests
 # ============================================================================
 
+
 class TestExtractKeywords:
     """Tests for keyword extraction."""
 
@@ -211,12 +213,14 @@ class TestRecencyScore:
     def test_old_content(self):
         # Very old content should get score 0.0
         from datetime import timedelta
+
         old_date = datetime.utcnow() - timedelta(days=400)
         score = recency_score(old_date, max_age_days=365)
         assert score == 0.0
 
     def test_mid_age(self):
         from datetime import timedelta
+
         mid_date = datetime.utcnow() - timedelta(days=180)
         score = recency_score(mid_date, max_age_days=365)
         assert 0.4 < score < 0.6
@@ -239,7 +243,7 @@ class TestMMRRerank:
         results = [
             ("item1", 0.9, "python programming language"),
             ("item2", 0.85, "python programming tutorial"),  # Similar to item1
-            ("item3", 0.8, "javascript web development"),     # Different
+            ("item3", 0.8, "javascript web development"),  # Different
         ]
         reranked = mmr_rerank(results, lambda_param=0.5, top_k=3)
         assert len(reranked) == 3
@@ -292,6 +296,7 @@ class TestResultReranker:
 # Document Repository Tests
 # ============================================================================
 
+
 class TestIndexedDocument:
     """Tests for IndexedDocument dataclass."""
 
@@ -323,6 +328,7 @@ class TestIndexedDocument:
 # ============================================================================
 # Vault Indexing Tests
 # ============================================================================
+
 
 class TestShouldIndexPath:
     """Tests for path filtering."""
@@ -372,6 +378,7 @@ class TestComputeContentHash:
 # RAG Query Tests
 # ============================================================================
 
+
 class TestRAGQueryUseCase:
     """Tests for RAG query use case."""
 
@@ -406,7 +413,7 @@ class TestRAGQueryUseCase:
 
     def test_format_context_memories_only(self, mock_memory):
         rag = RAGQueryUseCase()
-        context = rag._format_context([mock_memory], [])
+        context = rag._format_context([mock_memory], [], [])
 
         assert "User Context" in context
         assert "Preference" in context
@@ -414,14 +421,14 @@ class TestRAGQueryUseCase:
 
     def test_format_context_documents_only(self, mock_document):
         rag = RAGQueryUseCase()
-        context = rag._format_context([], [mock_document])
+        context = rag._format_context([], [mock_document], [])
 
         assert "Relevant Knowledge" in context
         assert "Project Notes" in context or "notes" in context
 
     def test_format_context_empty(self):
         rag = RAGQueryUseCase()
-        context = rag._format_context([], [])
+        context = rag._format_context([], [], [])
         assert context == ""
 
     def test_combine_results(self, mock_memory, mock_document):
@@ -429,8 +436,10 @@ class TestRAGQueryUseCase:
         combined = rag._combine_results(
             memories=[mock_memory],
             documents=[mock_document],
+            uploaded_docs=[],
             memory_limit=5,
             document_limit=5,
+            uploaded_doc_limit=5,
         )
 
         assert len(combined) == 2
@@ -458,12 +467,13 @@ class TestScoredItem:
 # Integration-style Tests (with mocks)
 # ============================================================================
 
+
 class TestDocumentRepositoryMocked:
     """Tests for DocumentRepository with mocked dependencies."""
 
     @pytest.fixture
     def mock_qdrant(self):
-        with patch('src.infrastructure.vector_store.document_repository.get_qdrant_client') as mock:
+        with patch("src.infrastructure.vector_store.document_repository.get_qdrant_client") as mock:
             client = AsyncMock()
             mock.return_value = client
             yield client
@@ -471,7 +481,7 @@ class TestDocumentRepositoryMocked:
     @pytest.fixture
     def mock_embeddings(self):
         with patch(
-            'src.infrastructure.vector_store.document_repository.get_embedding_service'
+            "src.infrastructure.vector_store.document_repository.get_embedding_service"
         ) as mock:
             service = AsyncMock()
             service.embed_texts = AsyncMock(return_value=[[0.1] * 1536])
@@ -504,14 +514,14 @@ class TestVaultIndexingMocked:
 
     @pytest.fixture
     def mock_vault_client(self):
-        with patch('src.application.use_cases.vault_indexing.get_github_vault_client') as mock:
+        with patch("src.application.use_cases.vault_indexing.get_github_vault_client") as mock:
             client = AsyncMock()
             mock.return_value = client
             yield client
 
     @pytest.fixture
     def mock_doc_repo(self):
-        with patch('src.application.use_cases.vault_indexing.get_document_repository') as mock:
+        with patch("src.application.use_cases.vault_indexing.get_document_repository") as mock:
             repo = AsyncMock()
             mock.return_value = repo
             yield repo

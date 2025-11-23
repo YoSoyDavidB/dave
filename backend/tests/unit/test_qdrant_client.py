@@ -75,7 +75,10 @@ class TestQdrantClientWrapper:
         mock_result.score = 0.95
         mock_result.payload = {"text": "found"}
 
-        mock_qdrant.search.return_value = [mock_result]
+        # Mock the query_points response structure
+        mock_response = MagicMock()
+        mock_response.points = [mock_result]
+        mock_qdrant.query_points.return_value = mock_response
 
         with patch.object(client_wrapper, "_get_client", return_value=mock_qdrant):
             results = await client_wrapper.search(
@@ -92,7 +95,10 @@ class TestQdrantClientWrapper:
     @pytest.mark.asyncio
     async def test_search_with_threshold(self, client_wrapper, mock_qdrant):
         """Test search with score threshold."""
-        mock_qdrant.search.return_value = []
+        # Mock empty response
+        mock_response = MagicMock()
+        mock_response.points = []
+        mock_qdrant.query_points.return_value = mock_response
 
         with patch.object(client_wrapper, "_get_client", return_value=mock_qdrant):
             results = await client_wrapper.search(
@@ -104,7 +110,8 @@ class TestQdrantClientWrapper:
 
             assert len(results) == 0
             # Verify threshold was passed
-            call_args = mock_qdrant.search.call_args
+            call_args = mock_qdrant.query_points.call_args
+            assert call_args is not None
             assert call_args.kwargs["score_threshold"] == 0.8
 
     @pytest.mark.asyncio
@@ -148,10 +155,7 @@ class TestQdrantClientWrapper:
         """Test batch upsert."""
         mock_qdrant.upsert = AsyncMock()
 
-        points = [
-            (f"point-{i}", [0.1] * VECTOR_SIZE, {"index": i})
-            for i in range(5)
-        ]
+        points = [(f"point-{i}", [0.1] * VECTOR_SIZE, {"index": i}) for i in range(5)]
 
         with patch.object(client_wrapper, "_get_client", return_value=mock_qdrant):
             count = await client_wrapper.upsert_points_batch(
