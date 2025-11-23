@@ -166,7 +166,10 @@ async def upload_document(
     if content_type not in SUPPORTED_TYPES:
         raise HTTPException(
             status_code=400,
-            detail=f"Unsupported file type: {content_type}. Supported: {list(SUPPORTED_TYPES.keys())}"
+            detail=(
+                f"Unsupported file type: {content_type}. Supported: "
+                f"{list(SUPPORTED_TYPES.keys())}"
+            ),
         )
 
     # Validate category
@@ -377,8 +380,8 @@ async def update_document(
         tags=updated_doc.tags,
         description=updated_doc.description,
         file_size=updated_doc.file_size,
-        created_at=updated_doc.created_at.isoformat(),
-        updated_at=updated_doc.updated_at.isoformat(),
+        created_at=updated_at.isoformat(),
+        updated_at=updated_at.isoformat(),
         indexed=updated_doc.indexed,
         chunk_count=updated_doc.chunk_count,
     )

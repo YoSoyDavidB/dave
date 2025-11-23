@@ -8,8 +8,8 @@ from pydantic import BaseModel
 
 from src.application.use_cases.rag_query import get_rag_query_use_case
 from src.application.use_cases.vault_indexing import get_vault_indexing_use_case
-from src.infrastructure.vector_store.memory_repository import get_memory_repository
 from src.domain.entities.memory import MemoryType
+from src.infrastructure.vector_store.memory_repository import get_memory_repository
 
 logger = structlog.get_logger()
 router = APIRouter(prefix="/rag", tags=["rag"])

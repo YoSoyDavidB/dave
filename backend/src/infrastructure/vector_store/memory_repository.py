@@ -1,6 +1,6 @@
 """Memory repository implementation using Qdrant."""
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 

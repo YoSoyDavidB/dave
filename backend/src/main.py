@@ -1,13 +1,19 @@
 import structlog
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes import auth, chat, conversations, documents, english, health, rag, vault
 from src.config import get_settings
 from src.infrastructure.database import init_db
-from src.infrastructure.vector_store.qdrant_client import init_qdrant_collections, get_qdrant_client
-from src.infrastructure.vector_store.uploaded_document_repository import get_uploaded_document_repository
 from src.infrastructure.embeddings import get_embedding_service
+from src.infrastructure.vector_store.qdrant_client import (
+    get_qdrant_client,
+    init_qdrant_collections,
+)
+from src.infrastructure.vector_store.uploaded_document_repository import (
+    get_uploaded_document_repository,
+)
 
 # Configure structured logging
 structlog.configure(

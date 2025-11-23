@@ -1,6 +1,6 @@
-from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
+from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.main import app
 
@@ -16,7 +16,9 @@ def mock_user():
     user = MagicMock()
     user.id = "test-user-id-123"
     user.email = "test@example.com"
-    user.hashed_password = "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.O3tcQsgeQZS4Oi"  # "testpass123"
+    user.hashed_password = (
+        "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.O3tcQsgeQZS4Oi"
+    )  # "testpass123"
     user.is_active = True
     user.created_at = "2025-01-01T00:00:00"
     user.updated_at = "2025-01-01T00:00:00"

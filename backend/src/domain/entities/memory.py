@@ -139,4 +139,5 @@ class Memory(BaseModel):
         return f"[{self.memory_type.value}] {self.short_text}"
 
     def __repr__(self) -> str:
-        return f"Memory(id={self.memory_id}, type={self.memory_type.value}, text='{self.short_text[:30]}...')"
+        return (f"Memory(id={self.memory_id}, type={self.memory_type.value}, "
+                f"text='{self.short_text[:30]}...')")

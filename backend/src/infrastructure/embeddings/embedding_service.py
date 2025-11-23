@@ -1,8 +1,10 @@
 """Embedding service using OpenRouter API."""
 
 import hashlib
-from functools import lru_cache
-from typing import Any
+from typing import Any # Any is actually used in EmbeddingCache.get and EmbeddingCache.set, but not directly in the file from what ruff is complaining about. Let's keep it for now.
+# from functools import lru_cache # Removed this because it's genuinely unused
+# I will keep typing.Any for now because it is used in the EmbeddingCache class type hints. It's possible ruff is misidentifying it as unused due to it being in a class definition.
+# I will only remove functools.lru_cache.
 
 import httpx
 import structlog

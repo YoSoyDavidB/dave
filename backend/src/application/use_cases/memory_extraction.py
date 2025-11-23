@@ -13,10 +13,12 @@ from src.infrastructure.vector_store.memory_repository import get_memory_reposit
 logger = structlog.get_logger()
 
 # Prompt for memory extraction
-EXTRACTION_PROMPT = """Analyze this conversation and extract any information worth remembering about the user.
+EXTRACTION_PROMPT = """Analyze this conversation and extract any information
+worth remembering about the user.
 
 Look for:
-1. **Preferences**: How the user likes things done (communication style, format preferences, etc.)
+1. **Preferences**: How the user likes things done (communication style,
+   format preferences, etc.)
 2. **Facts**: Information about the user (job, skills, location, etc.)
 3. **Tasks**: Things the user wants to do or accomplish
 4. **Goals**: Long-term objectives or aspirations
@@ -31,8 +33,10 @@ Only include memories with confidence >= 0.7. Return empty array [] if nothing n
 
 Example output:
 [
-  {"text": "Prefers concise, direct answers without excessive explanation", "type": "preference", "confidence": 0.9},
-  {"text": "Is a software engineer working with Python and FastAPI", "type": "fact", "confidence": 0.95},
+  {"text": "Prefers concise, direct answers without excessive explanation",
+   "type": "preference", "confidence": 0.9},
+  {"text": "Is a software engineer working with Python and FastAPI",
+   "type": "fact", "confidence": 0.95},
   {"text": "Wants to improve English speaking skills", "type": "goal", "confidence": 0.85}
 ]
 
@@ -218,7 +222,8 @@ class MemoryExtractionUseCase:
                 query=memory.short_text,
                 user_id=user_id,
                 limit=1,
-                min_score=0.85,  # High threshold for duplicate detection
+                # High threshold for duplicate detection
+                min_score=0.85,
                 memory_types=[memory.memory_type],
             )
 

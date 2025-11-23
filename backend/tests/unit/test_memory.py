@@ -1,7 +1,7 @@
 """Tests for the memory system."""
 
 from datetime import datetime, timedelta
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
@@ -257,9 +257,16 @@ class TestMemoryRepository:
         """Test creating a memory."""
         from src.infrastructure.vector_store.memory_repository import MemoryRepository
 
-        with patch("src.infrastructure.vector_store.memory_repository.get_qdrant_client", return_value=mock_qdrant), \
-             patch("src.infrastructure.vector_store.memory_repository.get_embedding_service", return_value=mock_embeddings):
-
+        with (
+            patch(
+                "src.infrastructure.vector_store.memory_repository.get_qdrant_client",
+                return_value=mock_qdrant,
+            ),
+            patch(
+                "src.infrastructure.vector_store.memory_repository.get_embedding_service",
+                return_value=mock_embeddings,
+            ),
+        ):
             repo = MemoryRepository()
             memory = Memory(
                 user_id="user-123",
@@ -296,9 +303,16 @@ class TestMemoryRepository:
             )
         ]
 
-        with patch("src.infrastructure.vector_store.memory_repository.get_qdrant_client", return_value=mock_qdrant), \
-             patch("src.infrastructure.vector_store.memory_repository.get_embedding_service", return_value=mock_embeddings):
-
+        with (
+            patch(
+                "src.infrastructure.vector_store.memory_repository.get_qdrant_client",
+                return_value=mock_qdrant,
+            ),
+            patch(
+                "src.infrastructure.vector_store.memory_repository.get_embedding_service",
+                return_value=mock_embeddings,
+            ),
+        ):
             repo = MemoryRepository()
             results = await repo.search_similar(
                 query="test query",

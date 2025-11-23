@@ -1,7 +1,7 @@
 from datetime import timedelta
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, Response, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -108,7 +108,7 @@ async def login_for_access_token(
         value=access_token, # Removed "Bearer " prefix
         httponly=True,
         samesite="lax", # Strict, Lax, None
-        secure=settings.debug == False, # Should be True in production (HTTPS)
+        secure=not settings.debug, # Should be True in production (HTTPS)
         max_age=access_token_expires.total_seconds() # cookie expiration in seconds
     )
     return {"message": "Logged in successfully"}

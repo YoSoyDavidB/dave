@@ -2,40 +2,34 @@
 
 import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
-from src.infrastructure.vector_store.chunking import (
-    chunk_by_tokens,
-    chunk_markdown,
-    chunk_document,
-    estimate_tokens,
-    DocumentChunk,
-    CHARS_PER_TOKEN,
-)
-from src.infrastructure.vector_store.result_reranker import (
-    extract_keywords,
-    keyword_match_score,
-    recency_score,
-    mmr_rerank,
-    ResultReranker,
-    RerankedResult,
-)
-from src.infrastructure.vector_store.document_repository import (
-    IndexedDocument,
-    DocumentRepository,
-)
+from src.application.use_cases.rag_query import RAGQueryUseCase, ScoredItem
 from src.application.use_cases.vault_indexing import (
-    should_index_path,
-    compute_content_hash,
     VaultIndexingUseCase,
-)
-from src.application.use_cases.rag_query import (
-    RAGQueryUseCase,
-    RAGContext,
-    ScoredItem,
+    compute_content_hash,
+    should_index_path,
 )
 from src.domain.entities.memory import Memory, MemoryType
+from src.infrastructure.vector_store.chunking import (
+    CHARS_PER_TOKEN,
+    chunk_by_tokens,
+    chunk_document,
+    chunk_markdown,
+    estimate_tokens,
+)
+from src.infrastructure.vector_store.document_repository import (
+    DocumentRepository,
+    IndexedDocument,
+)
+from src.infrastructure.vector_store.result_reranker import (
+    ResultReranker,
+    extract_keywords,
+    keyword_match_score,
+    mmr_rerank,
+    recency_score,
+)
 
 
 # ============================================================================

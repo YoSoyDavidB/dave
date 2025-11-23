@@ -1,10 +1,9 @@
 """Qdrant client wrapper for vector storage operations."""
 
-import structlog
 from functools import lru_cache
 from typing import Any
-from uuid import UUID
 
+import structlog
 from qdrant_client import AsyncQdrantClient
 from qdrant_client.http import models
 from qdrant_client.http.exceptions import UnexpectedResponse
@@ -239,7 +238,12 @@ class QdrantClientWrapper:
             logger.debug("point_deleted", collection=collection_name, point_id=point_id)
             return True
         except UnexpectedResponse as e:
-            logger.error("delete_failed", collection=collection_name, point_id=point_id, error=str(e))
+            logger.error(
+                "delete_failed",
+                collection=collection_name,
+                point_id=point_id,
+                error=str(e),
+            )
             return False
 
     async def delete_by_filter(

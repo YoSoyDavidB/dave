@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass
-from typing import Iterator
+from collections.abc import Iterator
 
 
 @dataclass
@@ -119,7 +119,8 @@ def chunk_markdown(
     if not text.strip():
         return
 
-    char_chunk_size = chunk_size * CHARS_PER_TOKEN
+    # Remove unused variable char_chunk_size
+    # char_chunk_size = chunk_size * CHARS_PER_TOKEN
 
     # Split by headings first
     heading_pattern = r'^(#{1,6}\s+.+)$'

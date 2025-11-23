@@ -1,15 +1,14 @@
 """Tests for the embedding service."""
 
+import httpx
+import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import pytest
-import httpx
-
 from src.infrastructure.embeddings.embedding_service import (
-    EmbeddingService,
-    EmbeddingCache,
     EMBEDDING_MODEL,
     VECTOR_SIZE,
+    EmbeddingCache,
+    EmbeddingService,
 )
 
 

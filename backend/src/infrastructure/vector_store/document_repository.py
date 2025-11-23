@@ -2,19 +2,19 @@
 
 import hashlib
 import uuid
+from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-from dataclasses import dataclass
 
 import structlog
 from qdrant_client.http import models
 
 from src.infrastructure.embeddings import get_embedding_service
+from src.infrastructure.vector_store.chunking import chunk_document
 from src.infrastructure.vector_store.qdrant_client import (
     DOCUMENTS_COLLECTION,
     get_qdrant_client,
 )
-from src.infrastructure.vector_store.chunking import DocumentChunk, chunk_document
 
 logger = structlog.get_logger()
 
@@ -33,7 +33,9 @@ class IndexedDocument:
     score: float = 0.0
 
     @classmethod
-    def from_payload(cls, chunk_id: str, payload: dict[str, Any], score: float = 0.0) -> "IndexedDocument":
+    def from_payload(
+        cls, chunk_id: str, payload: dict[str, Any], score: float = 0.0
+    ) -> "IndexedDocument":
         """Create from Qdrant payload."""
         return cls(
             chunk_id=chunk_id,
@@ -42,7 +44,9 @@ class IndexedDocument:
             chunk_index=payload.get("chunk_index", 0),
             title=payload.get("title", ""),
             heading=payload.get("heading", ""),
-            last_modified=datetime.fromisoformat(payload.get("last_modified", datetime.utcnow().isoformat())),
+            last_modified=datetime.fromisoformat(
+                payload.get("last_modified", datetime.utcnow().isoformat())
+            ),
             score=score,
         )
 

@@ -109,7 +109,11 @@ def extract_sources_from_rag_context(result: RAGContext) -> list[SourceInfo]:
         sources.append(SourceInfo(
             type="document",
             title=title,
-            snippet=doc.content[:150] + "..." if len(doc.content) > 150 else doc.content,
+            snippet=(
+                doc.content[:150] + "..."
+                if len(doc.content) > 150
+                else doc.content
+            ),
             score=doc.score,
             metadata={"path": doc.path, "heading": doc.heading},
         ))

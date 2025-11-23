@@ -10,8 +10,8 @@ from qdrant_client.http import models
 
 from src.domain.entities.document import Document, DocumentCategory
 from src.infrastructure.embeddings import get_embedding_service
-from src.infrastructure.vector_store.qdrant_client import get_qdrant_client
 from src.infrastructure.vector_store.chunking import chunk_document
+from src.infrastructure.vector_store.qdrant_client import get_qdrant_client
 
 logger = structlog.get_logger()
 
