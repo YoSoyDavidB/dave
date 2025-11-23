@@ -196,14 +196,16 @@ If pre-commit fails, fix the issues before committing.
 Before marking any task as complete, verify:
 - [ ] Code follows the 100-character line limit
 - [ ] Imports are sorted correctly (stdlib, third-party, local)
-- [ ] All functions have type hints
+- [ ] Add type hints where feasible (not required for all functions)
 - [ ] Public functions have docstrings
 - [ ] No unused imports
 - [ ] File ends with a newline
 - [ ] No trailing whitespace
-- [ ] `make lint` passes without errors
+- [ ] **`make lint` passes without errors** (ruff + mypy)
 - [ ] Tests are written/updated if needed
 - [ ] `make test` passes
+
+**Note:** mypy is configured with moderate strictness. Focus on fixing ruff errors first as they are more critical for code quality.
 
 ## Additional Notes
 

@@ -132,10 +132,9 @@ class QdrantClientWrapper:
         total = 0
 
         for i in range(0, len(points), batch_size):
-            batch = points[i:i + batch_size]
+            batch = points[i : i + batch_size]
             point_structs = [
-                models.PointStruct(id=pid, vector=vec, payload=pay)
-                for pid, vec, pay in batch
+                models.PointStruct(id=pid, vector=vec, payload=pay) for pid, vec, pay in batch
             ]
             await client.upsert(
                 collection_name=collection_name,
@@ -178,10 +177,7 @@ class QdrantClientWrapper:
             with_payload=True,
         )
 
-        return [
-            (str(r.id), r.score, r.payload or {})
-            for r in results.points
-        ]
+        return [(str(r.id), r.score, r.payload or {}) for r in results.points]
 
     async def get_point(
         self,
@@ -311,7 +307,7 @@ class QdrantClientWrapper:
             for col in collections.collections:
                 info = await client.get_collection(col.name)
                 collection_info[col.name] = {
-                    "vectors_count": info.vectors_count,
+                    "vectors_count": info.indexed_vectors_count or 0,
                     "points_count": info.points_count,
                 }
 
