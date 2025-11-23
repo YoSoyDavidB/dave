@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect, FormEvent } from 'react'
-import { Send, Sparkles, Search, MoreVertical, Square, Loader2, Wrench } from 'lucide-react'
+import { Send, Sparkles, Search, MoreVertical, Square, Loader2 } from 'lucide-react'
 import { useChatStore } from '../stores/chatStore'
 import ChatHistory from '../components/chat/ChatHistory'
 import MarkdownMessage from '../components/chat/MarkdownMessage'
+import { ToolIndicatorCompact } from '../components/chat/ToolIndicator'
 
 // Futuristic smoke orb avatar component
 function SmokeOrb({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
@@ -52,12 +53,7 @@ function StreamingIndicator({ status, tool }: { status: string; tool: string | n
   }
 
   if (status === 'tool_executing' && tool) {
-    return (
-      <div className="flex items-center gap-2 text-[#F0FF3D] text-sm">
-        <Wrench size={14} className="animate-pulse" />
-        <span>Using {tool.replace(/_/g, ' ')}...</span>
-      </div>
-    )
+    return <ToolIndicatorCompact toolName={tool} isExecuting={true} />
   }
 
   if (status === 'streaming') {
@@ -235,10 +231,7 @@ export default function Chat() {
                       </div>
                       <div className="message-assistant px-4 py-3 rounded-2xl rounded-bl-md">
                         {streamStatus === 'tool_executing' && currentTool ? (
-                          <div className="flex items-center gap-2 text-[#F0FF3D]">
-                            <Wrench size={14} className="animate-spin" />
-                            <span className="text-sm">Using {currentTool.replace(/_/g, ' ')}...</span>
-                          </div>
+                          <ToolIndicatorCompact toolName={currentTool} isExecuting={true} />
                         ) : (
                           <div className="flex space-x-1.5">
                             <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" />

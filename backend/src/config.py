@@ -26,8 +26,13 @@ class Settings(BaseSettings):
     # Database
     database_url: str = "postgresql+asyncpg://localhost:5432/dave"
 
+    # JWT
+    jwt_secret_key: str = "super-secret-jwt-key-please-change" # IMPORTANT: Change this in production!
+    jwt_algorithm: str = "HS256"
+
     # Redis
     redis_url: str = "redis://localhost:6379"
+
 
     # Qdrant
     qdrant_url: str = "http://localhost:6333"

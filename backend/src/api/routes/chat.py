@@ -15,7 +15,7 @@ from src.tools.vault_tools import execute_tool as execute_vault_tool
 logger = structlog.get_logger()
 router = APIRouter(tags=["chat"])
 
-MAX_TOOL_ITERATIONS = 5
+MAX_TOOL_ITERATIONS = 10
 
 
 class Message(BaseModel):
@@ -110,7 +110,11 @@ When correcting English:
    - Informal/casual language (that's fine between friends)
    - Things that are just style preferences
 
-6. Use log_english_correction for significant errors to track patterns
+6. **ALWAYS use log_english_correction** when you make a correction, especially for:
+   - Expression corrections (like "throw the garbage" → "take out the garbage")
+   - Grammar errors
+   - Vocabulary improvements
+   - Only skip logging for obvious typos that the user would catch themselves
 7. Categories: grammar, vocabulary, spelling, expression
 
 ## COMMON SPANISH→ENGLISH PATTERNS TO WATCH:

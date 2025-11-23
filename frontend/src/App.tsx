@@ -2,16 +2,36 @@ import { Routes, Route } from 'react-router-dom'
 import Layout from './components/layout/Layout'
 import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
+import EnglishProgress from './pages/EnglishProgress'
+import VaultBrowser from './pages/VaultBrowser'
+import LoginPage from './pages/LoginPage'
+import RegisterPage from './pages/RegisterPage'
+import ProtectedRoute from './components/auth/ProtectedRoute'
+import { useEffect } from 'react'
+import { useAuthStore } from './stores/authStore'
 
 function App() {
+  const { checkAuthStatus } = useAuthStore()
+
+  useEffect(() => {
+    checkAuthStatus()
+  }, [checkAuthStatus])
+
   return (
     <Routes>
-      <Route path="/" element={<Layout />}>
-        <Route index element={<Chat />} />
-        <Route path="dashboard" element={<Dashboard />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+      <Route element={<ProtectedRoute />}>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Chat />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="learn" element={<EnglishProgress />} />
+          <Route path="vault" element={<VaultBrowser />} />
+        </Route>
       </Route>
     </Routes>
   )
 }
 
 export default App
+

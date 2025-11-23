@@ -143,9 +143,13 @@ class GitHubVaultClient:
             items: list[dict[str, str]] = []
             for item in data:
                 if item["type"] == "dir" or item["name"].endswith(".md"):
+                    # Return path relative to vault prefix, not the full GitHub path
+                    relative_path = item["path"]
+                    if self.vault_prefix and relative_path.startswith(self.vault_prefix + "/"):
+                        relative_path = relative_path[len(self.vault_prefix) + 1:]
                     items.append({
                         "name": item["name"],
-                        "path": item["path"],
+                        "path": relative_path,
                         "type": item["type"],
                     })
 
@@ -169,9 +173,13 @@ class GitHubVaultClient:
 
             results: list[dict[str, str]] = []
             for item in data.get("items", []):
+                # Return path relative to vault prefix
+                relative_path = item["path"]
+                if self.vault_prefix and relative_path.startswith(self.vault_prefix + "/"):
+                    relative_path = relative_path[len(self.vault_prefix) + 1:]
                 results.append({
                     "name": item["name"],
-                    "path": item["path"],
+                    "path": relative_path,
                 })
 
             logger.info("vault_search", query=query, results=len(results))

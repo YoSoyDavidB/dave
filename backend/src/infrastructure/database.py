@@ -36,7 +36,7 @@ async def init_db() -> None:
     logger = structlog.get_logger()
 
     # Import models to register them with SQLAlchemy
-    from src.core.models import Conversation, EnglishCorrection, Message  # noqa: F401
+    from src.core.models import Conversation, EnglishCorrection, Message, User  # noqa: F401
 
     try:
         async with engine.begin() as conn:

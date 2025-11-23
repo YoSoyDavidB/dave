@@ -1,6 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import {
-  MessageSquare,
   LayoutDashboard,
   HelpCircle,
   User,
@@ -8,22 +7,27 @@ import {
   Settings,
   Home,
   BookOpen,
-  Calendar,
-  BarChart3,
-  Folder
+  Folder,
+  LogOut,
 } from 'lucide-react'
+import { useAuthStore } from '../../stores/authStore'
+import { useNavigate } from 'react-router-dom'
 
 export default function Layout() {
   const location = useLocation()
+  const navigate = useNavigate()
+  const { logout } = useAuthStore()
+
+  const handleLogout = async () => {
+    await logout()
+    navigate('/login')
+  }
 
   const sidebarItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/chat', icon: MessageSquare, label: 'Chat' },
+    { path: '/', icon: Home, label: 'Chat' },
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/learn', icon: BookOpen, label: 'Learn' },
-    { path: '/calendar', icon: Calendar, label: 'Calendar' },
-    { path: '/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/files', icon: Folder, label: 'Files' },
+    { path: '/learn', icon: BookOpen, label: 'English' },
+    { path: '/vault', icon: Folder, label: 'Vault' },
   ]
 
   const bottomItems = [
@@ -79,6 +83,14 @@ export default function Layout() {
               </Link>
             )
           })}
+          
+          <button
+            onClick={handleLogout}
+            className="sidebar-nav-item"
+            title="Logout"
+          >
+            <LogOut size={22} />
+          </button>
 
           {/* User avatar */}
           <div className="mt-4 relative group">
@@ -98,28 +110,28 @@ export default function Layout() {
             {/* Navigation pills */}
             <nav className="flex items-center gap-1 bg-[rgba(20,20,32,0.6)] rounded-full p-1">
               <Link
-                to="/dashboard"
-                className={`nav-pill ${location.pathname === '/dashboard' ? 'active' : ''}`}
-              >
-                Dashboard
-              </Link>
-              <Link
                 to="/"
                 className={`nav-pill ${location.pathname === '/' ? 'active' : ''}`}
               >
                 AI Chat
               </Link>
               <Link
-                to="/help"
-                className={`nav-pill ${location.pathname === '/help' ? 'active' : ''}`}
+                to="/learn"
+                className={`nav-pill ${location.pathname === '/learn' ? 'active' : ''}`}
               >
-                Help
+                English
               </Link>
               <Link
-                to="/account"
-                className={`nav-pill ${location.pathname === '/account' ? 'active' : ''}`}
+                to="/vault"
+                className={`nav-pill ${location.pathname === '/vault' ? 'active' : ''}`}
               >
-                Account
+                Vault
+              </Link>
+              <Link
+                to="/dashboard"
+                className={`nav-pill ${location.pathname === '/dashboard' ? 'active' : ''}`}
+              >
+                Dashboard
               </Link>
             </nav>
           </div>

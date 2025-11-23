@@ -1,383 +1,372 @@
 ---
 created: 2024-11-22
+last_updated: 2025-11-23
 tags:
   - project
   - AI
   - planning
-status: draft
+status: active
 ---
 
 # 📅 Dave - Development Plan
 
-> Tiempo estimado: 5-10 horas/semana
-> Duración total: ~14 semanas para MVP completo
+> **Status Update (Nov 23, 2025):** Phases 1-3 are COMPLETE including frontend. Authentication system implemented. Currently preparing for Phase 4 (Smart Dave with memory).
 
 ---
 
-## Phase 1: Foundation (Semanas 1-3)
+## ✅ Phase 1: Foundation (Semanas 1-3) - COMPLETE
 
 ### Sprint 1.1: Project Setup (Semana 1)
-**Goal:** Tener el proyecto configurado y un "Hello World" funcionando
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Crear repositorio GitHub | 0.5h | P0 |
-| Setup backend (FastAPI + Poetry) | 2h | P0 |
-| Setup frontend (React + Vite + TypeScript) | 2h | P0 |
-| Docker Compose básico | 1h | P0 |
-| CI/CD con GitHub Actions | 2h | P1 |
-| Configurar pytest + primera test | 1h | P0 |
-| **Total** | **8.5h** | |
-
-**Deliverable:**
-- Proyecto corriendo en local con `docker-compose up`
-- Endpoint `/health` funcionando
-- Tests corriendo en CI
-
----
+**Status: COMPLETE.** El proyecto está configurado con backend (FastAPI), frontend (React), Docker y CI/CD básicos.
 
 ### Sprint 1.2: LLM Integration (Semana 2)
-**Goal:** Tener una conversación básica con el LLM
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| OpenRouter client (con retry, timeout) | 3h | P0 |
-| Endpoint POST /api/chat básico | 2h | P0 |
-| Tests para LLM client (mocking) | 2h | P0 |
-| System prompt inicial (personalidad) | 1h | P0 |
-| Frontend: Chat UI básico | 3h | P0 |
-| **Total** | **11h** | |
-
-**Deliverable:**
-- Puedo enviar un mensaje y recibir respuesta de Dave
-- UI básica tipo chat
-- Personalidad de "amigo cercano" funciona
-
----
+**Status: COMPLETE.** El cliente de OpenRouter está implementado. El endpoint de chat y una UI de chat básica existen y son funcionales.
 
 ### Sprint 1.3: Streaming + WebSocket (Semana 3)
-**Goal:** Respuestas en streaming como ChatGPT
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Implementar SSE/WebSocket en backend | 3h | P0 |
-| Streaming en frontend | 2h | P0 |
-| Typing indicator | 1h | P1 |
-| Manejo de errores y reconexión | 2h | P1 |
-| Tests de streaming | 2h | P1 |
-| **Total** | **10h** | |
-
-**Deliverable:**
-- Respuestas aparecen palabra por palabra
-- Indicador de "Dave is typing..."
-- Manejo graceful de errores de conexión
+**Status: COMPLETE.** Las respuestas en streaming (SSE) están implementadas tanto en el backend como en el frontend.
 
 ---
 
-## Phase 2: English Correction (Semanas 4-5)
+## ✅ Phase 2: English Correction (Semanas 4-5) - COMPLETE
 
 ### Sprint 2.1: English Analyzer (Semana 4)
-**Goal:** Detectar errores de inglés en mensajes del usuario
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| EnglishAnalyzer class | 3h | P0 |
-| Prompt engineering para análisis | 2h | P0 |
-| Modelo de datos para errores | 1h | P0 |
-| Tests con casos reales | 2h | P0 |
-| Integrar análisis en chat flow | 2h | P0 |
-| **Total** | **10h** | |
-
-**Deliverable:**
-- Cada mensaje del usuario es analizado
-- Se detectan errores de gramática y naturalidad
-- Análisis no bloquea el flujo principal
-
----
+**Status: COMPLETE.** La lógica para analizar los mensajes del usuario está implementada en el backend a través de herramientas.
 
 ### Sprint 2.2: Corrections Display (Semana 5)
-**Goal:** Mostrar correcciones de manera amigable
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| EnglishCorrector: genera correcciones amigables | 2h | P0 |
-| Formato de corrección en respuesta | 1h | P0 |
-| UI component para correcciones | 2h | P0 |
-| Persistir correcciones en DB | 2h | P1 |
-| Tests de corrector | 2h | P0 |
-| **Total** | **9h** | |
-
-**Deliverable:**
-- Correcciones aparecen al final del mensaje
-- Formato: "💡 English tip: [corrección]"
-- Correcciones guardadas para tracking
+**Status: COMPLETE.**
+- Backend: API endpoints para correcciones (`/api/v1/english/*`)
+- Frontend: Página `/learn` con dashboard de progreso
+- Estadísticas por categoría (grammar, vocabulary, spelling, expression)
+- Lista filtrable de correcciones con explicaciones
 
 ---
 
-## Phase 3: Obsidian Integration (Semanas 6-8)
+## ✅ Phase 3: Obsidian Integration (Semanas 6-8) - COMPLETE
 
 ### Sprint 3.1: GitHub Integration (Semana 6)
-**Goal:** Conectar con el vault via GitHub API
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| GitHub client (auth, CRUD files) | 3h | P0 |
-| Tests de integración con GitHub | 2h | P0 |
-| Leer estructura del vault | 2h | P0 |
-| Tool framework (base class) | 2h | P0 |
-| **Total** | **9h** | |
-
-**Deliverable:**
-- Puedo leer/escribir archivos en el repo del vault
-- Tests pasan con repo de staging
-- Framework para crear tools
-
----
+**Status: COMPLETE.** El cliente de GitHub (`GitHubVaultClient`) está implementado y probado.
 
 ### Sprint 3.2: Create Daily Note (Semana 7)
-**Goal:** Crear daily notes desde el chat
+**Status: COMPLETE.**
+- Tool `create_daily_note` que lee la plantilla del vault y procesa sintaxis Templater
+- Tool `append_to_daily_note` con auto-creación si no existe
+- Secciones soportadas: quick_capture, notes, tasks, gastos, english
 
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| CreateDailyNote tool | 3h | P0 |
-| Parsear template de Daily Note | 2h | P0 |
-| Extraer info de conversación para note | 2h | P0 |
-| Integrar tool con agent | 2h | P0 |
-| Tests E2E | 2h | P0 |
-| **Total** | **11h** | |
-
-**Deliverable:**
-- "Create my daily note" funciona
-- Nota se crea con formato correcto
-- Se extrae info relevante de la conversación
+### Sprint 3.3: More Tools + UI (Semana 8)
+**Status: COMPLETE.**
+- Frontend: Página `/vault` con navegador de archivos
+- Búsqueda de notas, navegación por carpetas
+- Visor de markdown integrado
+- Indicadores visuales de herramientas en el chat
 
 ---
 
-### Sprint 3.3: More Tools (Semana 8)
-**Goal:** Person notes, tasks, search
+## 🚧 Phase 4: Smart Dave - Memory & RAG (Semanas 9-11) - IN PROGRESS
 
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| CreatePersonNote tool | 2h | P1 |
-| AddTask tool | 2h | P1 |
-| SearchNotes tool (keyword) | 2h | P1 |
-| Tool selection logic | 2h | P0 |
-| Tests para cada tool | 2h | P0 |
-| **Total** | **10h** | |
+> **Reference:** Arquitectura inspirada en proyecto AION (`/Users/davidbuitrago/Documents/AION`)
 
-**Deliverable:**
-- Puedo crear notas de personas
-- Puedo agregar tasks desde chat
-- Búsqueda básica funciona
+### Sprint 4.1: Infrastructure Setup (Semana 9)
+**Goal:** Configurar Qdrant y servicios base de embeddings
 
----
+#### User Stories
+- **US-4.1.1**: Como desarrollador, necesito un cliente Qdrant configurado para almacenar vectores
+- **US-4.1.2**: Como desarrollador, necesito un servicio de embeddings que convierta texto a vectores
+- **US-4.1.3**: Como desarrollador, necesito colecciones separadas para memorias y documentos
 
-## Phase 4: Memory & RAG (Semanas 9-10)
+| Task | Description | Priority |
+|------|-------------|----------|
+| Qdrant client wrapper | Cliente async con manejo de conexiones y errores | P0 |
+| Embedding service | Usar OpenRouter para text-embedding-3-small (1536 dims) | P0 |
+| Collection setup | Crear colecciones `memories` y `kb_documents` | P0 |
+| Docker config | Agregar Qdrant a docker-compose | P0 |
+| Tests unitarios | Tests para cliente Qdrant y embeddings | P0 |
 
-### Sprint 4.1: Conversation Memory (Semana 9)
-**Goal:** Dave recuerda conversaciones anteriores
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Qdrant client setup | 2h | P0 |
-| Embedding service | 2h | P0 |
-| Store/retrieve conversation history | 3h | P0 |
-| Context injection en prompts | 2h | P0 |
-| Tests de memoria | 2h | P0 |
-| **Total** | **11h** | |
-
-**Deliverable:**
-- Conversaciones se guardan en Qdrant
-- Dave puede referenciar conversaciones anteriores
-- Contexto relevante se inyecta automáticamente
+**Deliverables:**
+- `src/infrastructure/vector_store/qdrant_client.py`
+- `src/infrastructure/embeddings/embedding_service.py`
+- Qdrant corriendo en Docker (puerto 6333)
+- Tests pasando
 
 ---
 
-### Sprint 4.2: Vault RAG (Semana 10)
-**Goal:** Búsqueda semántica sobre el vault
+### Sprint 4.2: Long-Term Memory System (Semana 10)
+**Goal:** Dave extrae y recuerda preferencias del usuario automáticamente
 
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Indexar vault en Qdrant | 3h | P0 |
-| SearchNotes con RAG | 3h | P0 |
-| Incremental indexing | 2h | P1 |
-| UI para mostrar sources | 1h | P1 |
-| Tests de RAG | 2h | P0 |
-| **Total** | **11h** | |
+#### User Stories
+- **US-4.2.1**: Como usuario, quiero que Dave recuerde mis preferencias sin que yo las tenga que repetir
+- **US-4.2.2**: Como usuario, quiero que Dave aprenda hechos sobre mí de forma natural durante las conversaciones
+- **US-4.2.3**: Como usuario, quiero que las memorias obsoletas se eliminen automáticamente
 
-**Deliverable:**
-- "What did I write about X?" funciona
-- Resultados incluyen excerpts relevantes
-- Indexing se actualiza automáticamente
+#### Memory Entity Model
+```python
+class Memory:
+    memory_id: UUID
+    user_id: str
+    short_text: str                    # Contenido (max 500 chars)
+    memory_type: MemoryType            # PREFERENCE, FACT, TASK, GOAL, PROFILE
+    timestamp: datetime
+    last_referenced_at: datetime
+    relevance_score: float             # 0-1, decae con el tiempo
+    num_times_referenced: int
+    embedding: list[float]             # Vector 1536 dims
+    source: str                        # conversation_id o file path
+```
+
+#### Memory Types
+| Type | Description | Example |
+|------|-------------|---------|
+| PREFERENCE | Preferencias del usuario | "Prefiere respuestas concisas" |
+| FACT | Información factual | "Es ingeniero de software" |
+| TASK | Tareas pendientes | "Quiere aprender Rust" |
+| GOAL | Metas a largo plazo | "Está construyendo un startup" |
+| PROFILE | Info de perfil | "Se llama David" |
+
+| Task | Description | Priority |
+|------|-------------|----------|
+| Memory entity | Definir modelo en `domain/entities/memory.py` | P0 |
+| Memory repository | Interface + implementación Qdrant | P0 |
+| Memory extraction | Extraer memorias de conversaciones con LLM | P0 |
+| Background extraction | Ejecutar extracción en background después del chat | P0 |
+| Relevance decay | Sistema de decaimiento (factor 0.95) | P1 |
+| Memory consolidation | Eliminar memorias obsoletas (90 días sin uso) | P1 |
+| Tests | Tests para extracción y búsqueda | P0 |
+
+**Deliverables:**
+- `src/domain/entities/memory.py`
+- `src/infrastructure/vector_store/memory_repository.py`
+- `src/application/use_cases/memory_extraction.py`
+- Memorias se extraen automáticamente de cada conversación
+- Dave usa memorias relevantes en sus respuestas
+
+---
+
+### Sprint 4.3: RAG Pipeline (Semana 11)
+**Goal:** Búsqueda semántica sobre vault y memorias con contexto inteligente
+
+#### User Stories
+- **US-4.3.1**: Como usuario, quiero preguntar "¿Qué escribí sobre X?" y obtener resultados relevantes
+- **US-4.3.2**: Como usuario, quiero que Dave use información de mi vault para responder preguntas
+- **US-4.3.3**: Como usuario, quiero ver las fuentes que Dave usó para su respuesta
+
+#### RAG Pipeline Flow
+```
+User Query
+    ↓
+1. Generate query embedding
+    ↓
+2. Search relevant context:
+   ├─ Memories (Qdrant) → filtered by user_id
+   ├─ Documents (Qdrant) → vault chunks
+   └─ (Future: Neo4j entities)
+    ↓
+3. Rerank results (hybrid: keyword + recency)
+    ↓
+4. Assemble context text (markdown format)
+    ↓
+5. Generate response with context
+    ↓
+6. Return answer + sources used
+```
+
+| Task | Description | Priority |
+|------|-------------|----------|
+| Document chunking | Dividir notas del vault en chunks (500 tokens) | P0 |
+| Vault indexing | Indexar vault completo en Qdrant | P0 |
+| RAG use case | Pipeline de retrieval + generation | P0 |
+| Result reranker | Estrategias: MMR, keyword boost, recency, hybrid | P1 |
+| Context assembly | Formatear contexto como markdown | P0 |
+| Incremental sync | Solo indexar archivos nuevos/modificados | P1 |
+| Sources UI | Mostrar fuentes en el frontend | P1 |
+| Tests | Tests para RAG pipeline | P0 |
+
+**Deliverables:**
+- `src/infrastructure/vector_store/document_repository.py`
+- `src/application/use_cases/rag_use_case.py`
+- `src/infrastructure/vector_store/result_reranker.py`
+- Vault indexado en Qdrant
+- Chat responde con contexto del vault
+- UI muestra sources usados
 
 ---
 
 ## Phase 5: Proactive Features (Semanas 11-12)
 
-### Sprint 5.1: Reminders (Semana 11)
-**Goal:** Recordatorios proactivos
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Task queue setup (Celery + Redis) | 2h | P0 |
-| Scan vault for pending tasks | 2h | P0 |
-| Reminder notification system | 2h | P0 |
-| Weekly review scheduler | 2h | P1 |
-| Tests de scheduling | 2h | P0 |
-| **Total** | **10h** | |
-
-**Deliverable:**
-- Dave me recuerda tareas pendientes
-- Weekly review prompt los domingos
-- Notificaciones no intrusivas
-
----
-
-### Sprint 5.2: English Progress Dashboard (Semana 12)
-**Goal:** Ver mi progreso en inglés
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Stats API endpoint | 2h | P1 |
-| Dashboard page (frontend) | 4h | P1 |
-| Charts de progreso | 2h | P2 |
-| Common errors view | 2h | P1 |
-| **Total** | **10h** | |
-
-**Deliverable:**
-- Dashboard muestra estadísticas
-- Puedo ver mis errores más comunes
-- Streak visible
+(No changes, remains as future work)
 
 ---
 
 ## Phase 6: Polish & Deploy (Semanas 13-14)
 
-### Sprint 6.1: Hardening (Semana 13)
-**Goal:** Estabilidad y seguridad
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Auth system (JWT) | 3h | P0 |
-| Rate limiting | 1h | P1 |
-| Error handling global | 2h | P0 |
-| Logging & monitoring | 2h | P1 |
-| Security review | 2h | P0 |
-| **Total** | **10h** | |
-
----
-
-### Sprint 6.2: Production Deploy (Semana 14)
-**Goal:** Running en VPS
-
-| Task | Estimated Hours | Priority |
-|------|-----------------|----------|
-| Production Docker config | 2h | P0 |
-| Deploy a Hostinger VPS | 3h | P0 |
-| SSL/HTTPS setup | 1h | P0 |
-| Domain config | 1h | P1 |
-| Smoke testing | 2h | P0 |
-| Documentación | 2h | P1 |
-| **Total** | **11h** | |
-
----
-
-## Summary
-
-| Phase | Weeks | Total Hours | Focus |
-|-------|-------|-------------|-------|
-| 1. Foundation | 1-3 | ~30h | Setup, LLM, Streaming |
-| 2. English | 4-5 | ~19h | Analyzer, Corrections |
-| 3. Obsidian | 6-8 | ~30h | GitHub, Tools |
-| 4. Memory | 9-10 | ~22h | Qdrant, RAG |
-| 5. Proactive | 11-12 | ~20h | Reminders, Dashboard |
-| 6. Deploy | 13-14 | ~21h | Auth, Deploy |
-| **Total** | **14 weeks** | **~142h** | |
-
-**At 7.5h/week average = ~19 weeks**
-**At 10h/week = ~14 weeks**
+(No changes, remains as future work)
 
 ---
 
 ## Milestones
 
-### 🏁 M1: First Conversation (Week 3)
-- [ ] Chat funciona end-to-end
-- [ ] Personalidad de Dave definida
-- [ ] Streaming works
+### ✅ 🏁 M1: First Conversation (Week 3)
+- [x] Chat funciona end-to-end
+- [x] Personalidad de Dave definida
+- [x] Streaming works
 
-### 🏁 M2: English Dave (Week 5)
-- [ ] Correcciones funcionan
-- [ ] Feedback amigable
-- [ ] Errores se trackean
+### ✅ 🏁 M2: English Dave (Week 5)
+- [x] Correcciones funcionan (backend)
+- [x] Feedback amigable (frontend `/learn`)
+- [x] Errores se trackean
 
-### 🏁 M3: Obsidian Connected (Week 8)
-- [ ] Daily notes desde chat
-- [ ] People notes
-- [ ] Task extraction
-- [ ] Basic search
+### ✅ 🏁 M3: Obsidian Connected (Week 8)
+- [x] Daily notes desde chat (con plantilla del vault)
+- [x] Append to daily note (auto-create)
+- [x] Basic search (backend + frontend `/vault`)
+- [x] Vault browser UI
 
-### 🏁 M4: Smart Dave (Week 10)
-- [ ] Memoria de conversaciones
-- [ ] RAG sobre vault
-- [ ] Contexto inteligente
+### ✅ 🏁 M3.5: Authentication (Added)
+- [x] User registration/login
+- [x] JWT cookies authentication
+- [x] Protected routes
+- [x] Auth UI matching app design
+
+### ➡️ 🏁 M4: Smart Dave (Weeks 9-11)
+- [ ] Qdrant + Embedding service configurados
+- [ ] Sistema de memoria a largo plazo
+  - [ ] Extracción automática de preferencias/hechos
+  - [ ] Búsqueda semántica de memorias
+  - [ ] Decay y consolidación de memorias
+- [ ] RAG Pipeline
+  - [ ] Vault indexado y chunkeado
+  - [ ] Búsqueda semántica sobre vault
+  - [ ] Context assembly con sources
+- [ ] UI muestra fuentes usadas
 
 ### 🏁 M5: MVP Complete (Week 14)
 - [ ] Proactive reminders
 - [ ] Progress dashboard
 - [ ] Deployed to production
-- [ ] Documentation complete
+- [x] Documentation complete
 
 ---
 
-## Risk Mitigation
+## Current Architecture
 
-| Risk | Mitigation |
-|------|------------|
-| Scope creep | Stick to MVP features, defer Phase 2 items |
-| GitHub API limits | Cache vault locally, batch operations |
-| LLM costs | Use cheaper models for analysis, caching |
-| Time constraints | Prioritize P0 items, cut P2 if needed |
-| Sync conflicts | Wait for GitHub sync, use atomic operations |
+### Backend (FastAPI)
+- **API Routes**: `/api/v1/` prefix
+  - `chat.py` - Chat con streaming SSE
+  - `conversations.py` - CRUD conversaciones
+  - `vault.py` - Operaciones del vault
+  - `english.py` - Estadísticas y correcciones
+  - `auth.py` - Autenticación JWT
+  - `health.py` - Health check
+
+- **Tools**:
+  - Vault: `read_note`, `read_daily_note`, `create_note`, `create_daily_note`, `list_directory`, `search_vault`, `append_to_daily_note`
+  - English: `log_english_correction`, `get_english_progress`, `get_recent_english_errors`
+
+- **Infrastructure**:
+  - `github_vault.py` - Cliente GitHub API
+  - `database.py` - PostgreSQL async
+  - `openrouter.py` - Cliente LLM
+
+### Frontend (React + TypeScript)
+- **Pages**: Chat (`/`), EnglishProgress (`/learn`), VaultBrowser (`/vault`), Dashboard (`/dashboard`), Login, Register
+- **Stores**: `chatStore.ts`, `authStore.ts` (Zustand)
+- **Design System**: Ver `UI-Guidelines.md`
+
+### Docker Services
+- `backend` - FastAPI (puerto 8000)
+- `frontend` - Nginx serving React (puerto 5173)
+- `redis` - Cache
+- `postgres` - Database (puerto 5432)
+- `qdrant` - Vector database (puerto 6333) - **NEW**
 
 ---
 
-## Getting Started Checklist
+## Memory & RAG Architecture (Phase 4)
 
-**Week 1 - Day 1:**
-- [ ] Create GitHub repo: `Dave-ai`
-- [ ] Clone and setup local environment
-- [ ] Run first test
-
-**Tools needed:**
-- [ ] GitHub account with token
-- [ ] OpenRouter API key
-- [ ] Docker Desktop
-- [ ] VS Code / Cursor
-- [ ] Python 3.11+
-- [ ] Node.js 20+
-
-**First command:**
-```bash
-# Clone template
-git clone https://github.com/YOUR_USERNAME/Dave-ai.git
-cd Dave-ai
-
-# Setup backend
-cd backend
-poetry install
-poetry run pytest
-
-# Setup frontend
-cd ../frontend
-npm install
-npm run dev
+### Data Flow Diagram
+```
+User Message
+     ↓
+  ChatUseCase
+     ├─ 1. RAG Pipeline (sync)
+     │    ├─ Generate query embedding
+     │    ├─ Search memories (Qdrant)
+     │    ├─ Search documents (Qdrant)
+     │    ├─ Rerank results
+     │    ├─ Assemble context
+     │    └─ Generate response with LLM
+     │
+     └─ 2. Background Extraction (async)
+          ├─ Extract memories from conversation
+          │    ├─ LLM identifies preferences/facts
+          │    ├─ Generate embeddings
+          │    └─ Store in Qdrant
+          └─ (Future: Extract entities → Neo4j)
 ```
 
----
+### Vector Store Collections
+| Collection | Content | Vector Size | Payload |
+|------------|---------|-------------|---------|
+| `memories` | User preferences, facts, goals | 1536 | user_id, type, relevance_score, timestamp |
+| `kb_documents` | Vault chunks | 1536 | path, title, chunk_index, last_modified |
 
-## Next Actions
+### Memory Lifecycle
+```
+1. CREATION
+   User says something → LLM extracts memory → Embed → Store
 
-1. [ ] Review this plan
-2. [ ] Create GitHub repository
-3. [ ] Start Sprint 1.1
+2. RETRIEVAL
+   User asks question → Embed query → Search similar → Inject in context
+
+3. MAINTENANCE
+   - Referenced: boost relevance (+0.1)
+   - Time passes: decay relevance (×0.95)
+   - 90 days unused: delete
+```
+
+### Key Interfaces
+```python
+# Memory Repository Interface
+class IMemoryRepository(Protocol):
+    async def create(memory: Memory) -> Memory
+    async def search_similar(
+        query_embedding: list[float],
+        user_id: str,
+        limit: int = 5,
+        min_score: float = 0.7
+    ) -> list[tuple[Memory, float]]
+    async def update_relevance(memory_id: UUID, boost: float)
+    async def delete_stale(days: int = 90) -> int
+
+# Document Repository Interface
+class IDocumentRepository(Protocol):
+    async def index_document(path: str, chunks: list[str])
+    async def search_similar(
+        query_embedding: list[float],
+        limit: int = 10
+    ) -> list[tuple[DocumentChunk, float]]
+    async def delete_by_path(path: str)
+
+# Embedding Service Interface
+class IEmbeddingService(Protocol):
+    async def embed_text(text: str) -> list[float]
+    async def embed_texts(texts: list[str]) -> list[list[float]]
+```
+
+### File Structure (Phase 4)
+```
+backend/src/
+├── domain/
+│   └── entities/
+│       └── memory.py          # Memory, MemoryType enums
+├── infrastructure/
+│   ├── vector_store/
+│   │   ├── qdrant_client.py   # Qdrant wrapper
+│   │   ├── memory_repository.py
+│   │   ├── document_repository.py
+│   │   └── result_reranker.py
+│   └── embeddings/
+│       └── embedding_service.py
+└── application/
+    └── use_cases/
+        ├── rag_use_case.py
+        └── memory_extraction.py
+```

@@ -1,8 +1,93 @@
 """Vault tools for the AI agent."""
 
+import re
+from datetime import datetime, timedelta
 from typing import Any
 
 from src.infrastructure.github_vault import get_github_vault_client
+
+# Path to the daily note template in the vault
+DAILY_NOTE_TEMPLATE_PATH = "Extras/Templates/Template, Daily log.md"
+
+
+def _process_templater_syntax(template: str, date: datetime) -> str:
+    """Process Templater syntax in a template string."""
+    month_names = [
+        "", "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December"
+    ]
+    day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+    yesterday = date - timedelta(days=1)
+    tomorrow = date + timedelta(days=1)
+
+    # Build replacement map for common Templater patterns
+    result = template
+
+    # Replace tp.file.creation_date()
+    result = re.sub(
+        r'<%\s*tp\.file\.creation_date\(\)\s*%>',
+        date.strftime("%Y-%m-%d"),
+        result
+    )
+
+    # Replace moment formatting for title
+    result = re.sub(
+        r'<%\s*moment\(tp\.file\.title,[\'"]YYYY-MM-DD[\'"]\)\.format\([\'"]dddd, MMMM DD, YYYY[\'"]\)\s*%>',
+        f"{day_names[date.weekday()]}, {month_names[date.month]} {date.day:02d}, {date.year}",
+        result
+    )
+
+    # Replace tp.date.now patterns for yesterday (offset -1)
+    def replace_yesterday(match: re.Match) -> str:
+        fmt = match.group(1)
+        if fmt == "YYYY":
+            return str(yesterday.year)
+        elif fmt == "MM-MMMM":
+            return f"{yesterday.month:02d}-{month_names[yesterday.month]}"
+        elif fmt == "YYYY-MM-DD-dddd":
+            return f"{yesterday.strftime('%Y-%m-%d')}-{day_names[yesterday.weekday()]}"
+        return match.group(0)
+
+    result = re.sub(
+        r'<%\s*tp\.date\.now\([\'"]([^"\']+)[\'"],\s*-1\)\s*%>',
+        replace_yesterday,
+        result
+    )
+
+    # Replace tp.date.now patterns for tomorrow (offset 1)
+    def replace_tomorrow(match: re.Match) -> str:
+        fmt = match.group(1)
+        if fmt == "YYYY":
+            return str(tomorrow.year)
+        elif fmt == "MM-MMMM":
+            return f"{tomorrow.month:02d}-{month_names[tomorrow.month]}"
+        elif fmt == "YYYY-MM-DD-dddd":
+            return f"{tomorrow.strftime('%Y-%m-%d')}-{day_names[tomorrow.weekday()]}"
+        return match.group(0)
+
+    result = re.sub(
+        r'<%\s*tp\.date\.now\([\'"]([^"\']+)[\'"],\s*1\)\s*%>',
+        replace_tomorrow,
+        result
+    )
+
+    # Replace tp.date.now for current date (no offset)
+    result = re.sub(
+        r'<%\s*tp\.date\.now\([\'"]YYYY-MM-DD[\'"]\)\s*%>',
+        date.strftime("%Y-%m-%d"),
+        result
+    )
+
+    return result
+
+
+async def _get_daily_note_template(client: Any) -> str | None:
+    """Fetch and process the daily note template from the vault."""
+    template_file = await client.get_file(DAILY_NOTE_TEMPLATE_PATH)
+    if template_file is None:
+        return None
+    return str(template_file["content"])
 
 # Tool definitions for OpenRouter/Claude
 VAULT_TOOLS: list[dict[str, Any]] = [
@@ -103,7 +188,8 @@ VAULT_TOOLS: list[dict[str, Any]] = [
         "name": "append_to_daily_note",
         "description": (
             "Add content to today's daily note. "
-            "Use for quick capture, adding tasks, or logging activities."
+            "Use for quick capture, adding tasks, or logging activities. "
+            "If the daily note doesn't exist, use create_daily_note first."
         ),
         "input_schema": {
             "type": "object",
@@ -112,7 +198,7 @@ VAULT_TOOLS: list[dict[str, Any]] = [
                     "type": "string",
                     "description": (
                         "Section to append to: "
-                        "'quick_capture', 'notes', 'tasks', 'gastos'"
+                        "'quick_capture', 'notes', 'tasks', 'gastos', 'english'"
                     )
                 },
                 "content": {
@@ -121,6 +207,19 @@ VAULT_TOOLS: list[dict[str, Any]] = [
                 }
             },
             "required": ["section", "content"]
+        }
+    },
+    {
+        "name": "create_daily_note",
+        "description": (
+            "Create today's daily note with the standard template. "
+            "Use this when the user wants to add something to their daily note "
+            "but it doesn't exist yet."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {},
+            "required": []
         }
     }
 ]
@@ -173,8 +272,42 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
     elif tool_name == "append_to_daily_note":
         path = await client.get_daily_note_path()
         note = await client.get_file(path)
+
+        # Auto-create daily note if it doesn't exist
         if note is None:
-            return "Daily note not found for today"
+            today = datetime.now()
+            # Try to get template from vault
+            template_content = await _get_daily_note_template(client)
+            if template_content:
+                # Process Templater syntax
+                processed_content = _process_templater_syntax(template_content, today)
+            else:
+                # Fallback to basic template if vault template not found
+                day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+                month_names = ["", "January", "February", "March", "April", "May", "June",
+                              "July", "August", "September", "October", "November", "December"]
+                processed_content = f"""---
+created: {today.strftime("%Y-%m-%d")}
+tags:
+  - DailyNotes
+---
+
+# {day_names[today.weekday()]}, {month_names[today.month]} {today.day:02d}, {today.year}
+
+## 📥 Quick Capture
+-
+
+## 📝 Notes
+-
+
+## 💰 Gastos del día
+-
+"""
+            await client.create_file(path=path, content=processed_content)
+            # Re-fetch the note we just created
+            note = await client.get_file(path)
+            if note is None:
+                return "Failed to create daily note"
 
         content = str(note["content"])
         section = tool_input.get("section", "quick_capture")
@@ -187,8 +320,9 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
         section_markers = {
             "quick_capture": "## 📥 Quick Capture",
             "notes": "## 📝 Notes",
-            "tasks": "## Things I plan to accomplish",
+            "tasks": "##### 🚀 Things I plan to accomplish today are...",
             "gastos": "## 💰 Gastos del día",
+            "english": "## 🇬🇧 English Practice",
         }
 
         marker = section_markers.get(section)
@@ -223,5 +357,43 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
                 return f"Added to {section}: {new_content}"
 
         return f"Section '{section}' not found in daily note"
+
+    elif tool_name == "create_daily_note":
+        path = await client.get_daily_note_path()
+        existing = await client.get_file(path)
+        if existing is not None:
+            return f"Daily note already exists: {path}"
+
+        today = datetime.now()
+        # Try to get template from vault
+        template_content = await _get_daily_note_template(client)
+        if template_content:
+            # Process Templater syntax
+            processed_content = _process_templater_syntax(template_content, today)
+        else:
+            # Fallback to basic template if vault template not found
+            day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+            month_names = ["", "January", "February", "March", "April", "May", "June",
+                          "July", "August", "September", "October", "November", "December"]
+            processed_content = f"""---
+created: {today.strftime("%Y-%m-%d")}
+tags:
+  - DailyNotes
+---
+
+# {day_names[today.weekday()]}, {month_names[today.month]} {today.day:02d}, {today.year}
+
+## 📥 Quick Capture
+-
+
+## 📝 Notes
+-
+
+## 💰 Gastos del día
+-
+"""
+
+        await client.create_file(path=path, content=processed_content)
+        return f"Daily note created: {path}"
 
     return f"Unknown tool: {tool_name}"

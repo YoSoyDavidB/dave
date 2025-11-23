@@ -157,3 +157,93 @@ def test_get_daily_note(client: TestClient) -> None:
         assert response.status_code == 200
         data = response.json()
         assert "Daily Note" in data["content"]
+
+
+def test_get_daily_note_not_found(client: TestClient) -> None:
+    """Test getting daily note when it doesn't exist."""
+    with patch(
+        "src.api.routes.vault.get_github_vault_client"
+    ) as mock_get_client:
+        mock_client = AsyncMock()
+        mock_client.get_daily_note_path.return_value = "Timestamps/2024/11/2024-11-23.md"
+        mock_client.get_file.return_value = None
+        mock_get_client.return_value = mock_client
+
+        response = client.get("/api/v1/vault/daily-note")
+
+        assert response.status_code == 404
+
+
+def test_update_file_success(client: TestClient) -> None:
+    """Test updating an existing file."""
+    with patch(
+        "src.api.routes.vault.get_github_vault_client"
+    ) as mock_get_client:
+        mock_client = AsyncMock()
+        mock_client.update_file.return_value = {"content": {"sha": "updated123"}}
+        mock_get_client.return_value = mock_client
+
+        response = client.put(
+            "/api/v1/vault/file",
+            params={"path": "test.md"},
+            json={
+                "content": "# Updated content",
+                "sha": "original123",
+            },
+        )
+
+        assert response.status_code == 200
+        assert response.json()["status"] == "updated"
+
+
+def test_list_directory_empty(client: TestClient) -> None:
+    """Test listing an empty directory."""
+    with patch(
+        "src.api.routes.vault.get_github_vault_client"
+    ) as mock_get_client:
+        mock_client = AsyncMock()
+        mock_client.list_directory.return_value = []
+        mock_get_client.return_value = mock_client
+
+        response = client.get("/api/v1/vault/directory", params={"path": "Empty"})
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+
+def test_search_vault_no_results(client: TestClient) -> None:
+    """Test searching with no results."""
+    with patch(
+        "src.api.routes.vault.get_github_vault_client"
+    ) as mock_get_client:
+        mock_client = AsyncMock()
+        mock_client.search_files.return_value = []
+        mock_get_client.return_value = mock_client
+
+        response = client.get("/api/v1/vault/search", params={"query": "nonexistent"})
+
+        assert response.status_code == 200
+        assert response.json() == []
+
+
+def test_list_directory_root(client: TestClient) -> None:
+    """Test listing the root directory."""
+    mock_items = [
+        {"name": "Area", "path": "Area", "type": "dir"},
+        {"name": "Project", "path": "Project", "type": "dir"},
+        {"name": "README.md", "path": "README.md", "type": "file"},
+    ]
+
+    with patch(
+        "src.api.routes.vault.get_github_vault_client"
+    ) as mock_get_client:
+        mock_client = AsyncMock()
+        mock_client.list_directory.return_value = mock_items
+        mock_get_client.return_value = mock_client
+
+        response = client.get("/api/v1/vault/directory")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data) == 3
+        assert any(item["type"] == "dir" for item in data)
