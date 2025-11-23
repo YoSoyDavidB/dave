@@ -95,6 +95,7 @@ export default function KnowledgeBase() {
     if (activeTab === 'memories' && user?.id) {
       loadMemories()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user?.id])
 
   useEffect(() => {
@@ -102,6 +103,7 @@ export default function KnowledgeBase() {
       loadDocuments()
       loadDocumentStats()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, user?.id, categoryFilter])
 
   const loadDocuments = async () => {
@@ -313,44 +315,39 @@ export default function KnowledgeBase() {
         <div className="flex gap-2 mb-8">
           <button
             onClick={() => setActiveTab('documents')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-              activeTab === 'documents'
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${activeTab === 'documents'
                 ? 'bg-[#F0FF3D] text-[#0a0a0f]'
                 : 'text-zinc-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Upload size={18} />
             My Documents
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              activeTab === 'documents' ? 'bg-[#0a0a0f]/20' : 'bg-zinc-700'
-            }`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'documents' ? 'bg-[#0a0a0f]/20' : 'bg-zinc-700'
+              }`}>
               {documents.length}
             </span>
           </button>
           <button
             onClick={() => setActiveTab('vault')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-              activeTab === 'vault'
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${activeTab === 'vault'
                 ? 'bg-[#F0FF3D] text-[#0a0a0f]'
                 : 'text-zinc-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Database size={18} />
             Vault Index
           </button>
           <button
             onClick={() => setActiveTab('memories')}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${
-              activeTab === 'memories'
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium transition-all duration-200 ${activeTab === 'memories'
                 ? 'bg-[#F0FF3D] text-[#0a0a0f]'
                 : 'text-zinc-400 hover:text-white hover:bg-white/5'
-            }`}
+              }`}
           >
             <Brain size={18} />
             Memories
-            <span className={`text-xs px-2 py-0.5 rounded-full ${
-              activeTab === 'memories' ? 'bg-[#0a0a0f]/20' : 'bg-zinc-700'
-            }`}>
+            <span className={`text-xs px-2 py-0.5 rounded-full ${activeTab === 'memories' ? 'bg-[#0a0a0f]/20' : 'bg-zinc-700'
+              }`}>
               {memories.length}
             </span>
           </button>
@@ -519,11 +516,10 @@ export default function KnowledgeBase() {
                     Select File
                   </label>
                   <div
-                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${
-                      uploadFile
+                    className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all duration-200 ${uploadFile
                         ? 'border-[#F0FF3D]/50 bg-[#F0FF3D]/5'
                         : 'border-zinc-700 hover:border-[#F0FF3D]/30 hover:bg-white/[0.02]'
-                    }`}
+                      }`}
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <input
@@ -809,9 +805,8 @@ export default function KnowledgeBase() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <span
-                              className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
-                                memoryTypeColors[memory.memory_type] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
-                              }`}
+                              className={`px-2 py-0.5 rounded-full text-xs font-medium border ${memoryTypeColors[memory.memory_type] || 'bg-zinc-800 text-zinc-400 border-zinc-700'
+                                }`}
                             >
                               {memory.memory_type}
                             </span>

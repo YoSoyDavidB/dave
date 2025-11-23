@@ -1,9 +1,8 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import { BrowserRouter, MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router-dom'
 import { describe, it, expect, vi } from 'vitest'
 import App from './App'
 import { useAuthStore } from './stores/authStore'
-import { Router } from 'react-router-dom'
 
 
 // Mock the useAuthStore
@@ -78,7 +77,7 @@ describe('App Routing', () => {
     setup(['/dashboard'])
 
     await waitFor(() => {
-        expect(screen.getByRole('heading', { name: /Dashboard/i })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Dashboard/i })).toBeInTheDocument();
     });
   })
 
