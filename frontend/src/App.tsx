@@ -4,6 +4,7 @@ import Chat from './pages/Chat'
 import Dashboard from './pages/Dashboard'
 import EnglishProgress from './pages/EnglishProgress'
 import VaultBrowser from './pages/VaultBrowser'
+import KnowledgeBase from './pages/KnowledgeBase'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -27,6 +28,7 @@ function App() {
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="learn" element={<EnglishProgress />} />
           <Route path="vault" element={<VaultBrowser />} />
+          <Route path="knowledge" element={<KnowledgeBase />} />
         </Route>
       </Route>
     </Routes>

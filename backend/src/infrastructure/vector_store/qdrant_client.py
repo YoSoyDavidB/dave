@@ -170,17 +170,19 @@ class QdrantClientWrapper:
         """
         client = await self._get_client()
 
-        results = await client.search(
+        # Use query_points (qdrant-client 1.16+ API)
+        results = await client.query_points(
             collection_name=collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             limit=limit,
             score_threshold=score_threshold,
             query_filter=filter_conditions,
+            with_payload=True,
         )
 
         return [
             (str(r.id), r.score, r.payload or {})
-            for r in results
+            for r in results.points
         ]
 
     async def get_point(

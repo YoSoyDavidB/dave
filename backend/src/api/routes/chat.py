@@ -1,22 +1,34 @@
 import asyncio
 import json
 from collections.abc import AsyncIterator
+from dataclasses import dataclass
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, HTTPException, BackgroundTasks
+from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from src.infrastructure.openrouter import get_openrouter_client
-from src.infrastructure.vector_store.memory_repository import get_memory_repository
 from src.application.use_cases.memory_extraction import get_memory_extraction_use_case
+from src.application.use_cases.rag_query import RAGContext, get_rag_query_use_case
+from src.infrastructure.openrouter import get_openrouter_client
 from src.tools.english_tools import ENGLISH_TOOLS, execute_english_tool
 from src.tools.vault_tools import VAULT_TOOLS
 from src.tools.vault_tools import execute_tool as execute_vault_tool
 
 logger = structlog.get_logger()
 router = APIRouter(tags=["chat"])
+
+
+@dataclass
+class SourceInfo:
+    """Information about a source used in RAG."""
+
+    type: str  # "memory", "document", "uploaded_doc"
+    title: str
+    snippet: str
+    score: float
+    metadata: dict[str, Any] | None = None
 
 MAX_TOOL_ITERATIONS = 10
 
@@ -60,41 +72,116 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
     return await execute_vault_tool(tool_name, tool_input)
 
 
-async def get_memory_context(user_id: str, query: str) -> str:
-    """Retrieve relevant memories for context injection.
+@dataclass
+class RAGResult:
+    """Result from RAG retrieval including context and sources."""
+
+    context: str
+    sources: list[SourceInfo]
+
+
+def extract_sources_from_rag_context(result: RAGContext) -> list[SourceInfo]:
+    """Extract source information from RAG context result.
 
     Args:
-        user_id: User to get memories for
-        query: The user's current message for relevance matching
+        result: RAG context result
 
     Returns:
-        Formatted memory context string
+        List of source information
+    """
+    sources: list[SourceInfo] = []
+
+    # Extract memory sources
+    for memory in result.memories:
+        sources.append(SourceInfo(
+            type="memory",
+            title=memory.memory_type.value.title(),
+            snippet=memory.short_text[:150] + "..." if len(memory.short_text) > 150 else memory.short_text,
+            score=memory.relevance_score,
+            metadata={"memory_type": memory.memory_type.value},
+        ))
+
+    # Extract vault document sources
+    for doc in result.documents:
+        title = doc.path.split("/")[-1].replace(".md", "")
+        if doc.heading:
+            title = f"{title} > {doc.heading}"
+        sources.append(SourceInfo(
+            type="document",
+            title=title,
+            snippet=doc.content[:150] + "..." if len(doc.content) > 150 else doc.content,
+            score=doc.score,
+            metadata={"path": doc.path, "heading": doc.heading},
+        ))
+
+    # Extract uploaded document sources
+    for udoc in result.uploaded_docs:
+        sources.append(SourceInfo(
+            type="uploaded_doc",
+            title=f"{udoc.filename}",
+            snippet=udoc.content[:150] + "..." if len(udoc.content) > 150 else udoc.content,
+            score=udoc.score,
+            metadata={
+                "document_id": udoc.document_id,
+                "category": udoc.category,
+                "chunk_index": udoc.chunk_index,
+            },
+        ))
+
+    return sources
+
+
+async def get_rag_context(
+    user_id: str | None,
+    query: str,
+    include_vault: bool = True,
+    include_uploaded_docs: bool = True,
+) -> RAGResult:
+    """Retrieve relevant context using RAG (memories + vault docs + uploaded docs).
+
+    Args:
+        user_id: User to get memories and uploaded docs for (optional)
+        query: The user's current message for relevance matching
+        include_vault: Whether to include vault documents
+        include_uploaded_docs: Whether to include uploaded documents
+
+    Returns:
+        RAGResult with formatted context string and sources
     """
     try:
-        memory_repo = get_memory_repository()
-        memories = await memory_repo.search_similar(
+        rag = get_rag_query_use_case()
+        result = await rag.query(
             query=query,
             user_id=user_id,
-            limit=5,
-            min_score=0.6,  # Lower threshold to catch more relevant memories
+            include_memories=user_id is not None,
+            include_documents=include_vault,
+            include_uploaded_docs=include_uploaded_docs and user_id is not None,
+            memory_limit=5,
+            document_limit=3,
+            uploaded_doc_limit=3,
+            min_score=0.5,  # Slightly lower threshold to catch uploaded docs
+            rerank_strategy="hybrid",
         )
 
-        if not memories:
-            return ""
+        if not result.formatted_context:
+            return RAGResult(context="", sources=[])
 
-        # Format memories for context
-        lines = ["## What you remember about the user:"]
-        for memory, score in memories:
-            lines.append(f"- [{memory.memory_type.value}] {memory.short_text}")
+        sources = extract_sources_from_rag_context(result)
 
-            # Mark memory as referenced (boosts relevance)
-            await memory_repo.mark_referenced(memory.memory_id)
+        logger.debug(
+            "rag_context_retrieved",
+            user_id=user_id,
+            memories=result.retrieval_stats.get("memories_retrieved", 0),
+            documents=result.retrieval_stats.get("documents_retrieved", 0),
+            uploaded_docs=result.retrieval_stats.get("uploaded_docs_retrieved", 0),
+            sources_count=len(sources),
+        )
 
-        return "\n".join(lines)
+        return RAGResult(context=result.formatted_context, sources=sources)
 
     except Exception as e:
-        logger.warning("memory_retrieval_failed", error=str(e))
-        return ""
+        logger.warning("rag_retrieval_failed", error=str(e))
+        return RAGResult(context="", sources=[])
 
 
 async def extract_memories_background(
@@ -210,12 +297,12 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatR
             ""
         )
 
-        # Inject memory context if user_id provided
-        if request.user_id and last_user_msg:
-            memory_context = await get_memory_context(request.user_id, last_user_msg)
-            if memory_context:
-                system_prompt = f"{SYSTEM_PROMPT}\n\n{memory_context}"
-                logger.debug("memory_context_injected", user_id=request.user_id)
+        # Inject RAG context (memories + relevant documents)
+        if last_user_msg:
+            rag_result = await get_rag_context(request.user_id, last_user_msg)
+            if rag_result.context:
+                system_prompt = f"{SYSTEM_PROMPT}\n\n{rag_result.context}"
+                logger.debug("rag_context_injected", user_id=request.user_id)
 
         # Prepare messages with system prompt
         messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
@@ -327,6 +414,20 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatR
         raise HTTPException(status_code=500, detail=f"Chat error: {str(e)}")
 
 
+def sources_to_dict(sources: list[SourceInfo]) -> list[dict[str, Any]]:
+    """Convert SourceInfo list to serializable dict list."""
+    return [
+        {
+            "type": s.type,
+            "title": s.title,
+            "snippet": s.snippet,
+            "score": s.score,
+            "metadata": s.metadata,
+        }
+        for s in sources
+    ]
+
+
 async def generate_stream_events(
     messages: list[dict[str, Any]],
     model: str | None,
@@ -340,11 +441,13 @@ async def generate_stream_events(
     - content: Text content chunk
     - tool_start: Tool execution started
     - tool_result: Tool execution completed
+    - sources: Sources used for RAG context
     - done: Stream complete
     - error: Error occurred
     """
     client = get_openrouter_client()
     tools_used: list[str] = []
+    sources: list[SourceInfo] = []
 
     # Build system prompt with memory context
     system_prompt = SYSTEM_PROMPT
@@ -355,12 +458,13 @@ async def generate_stream_events(
         ""
     )
 
-    # Inject memory context if user_id provided
-    if user_id and last_user_msg:
-        memory_context = await get_memory_context(user_id, last_user_msg)
-        if memory_context:
-            system_prompt = f"{SYSTEM_PROMPT}\n\n{memory_context}"
-            logger.debug("memory_context_injected_stream", user_id=user_id)
+    # Inject RAG context (memories + relevant documents)
+    if last_user_msg:
+        rag_result = await get_rag_context(user_id, last_user_msg)
+        if rag_result.context:
+            system_prompt = f"{SYSTEM_PROMPT}\n\n{rag_result.context}"
+            sources = rag_result.sources
+            logger.debug("rag_context_injected_stream", user_id=user_id, sources_count=len(sources))
 
     # Add system prompt
     full_messages: list[dict[str, Any]] = [{"role": "system", "content": system_prompt}]
@@ -400,14 +504,18 @@ async def generate_stream_events(
                         # Schedule memory extraction in background
                         if user_id and conversation_id and accumulated_content:
                             extraction_msgs = messages.copy()
-                            extraction_msgs.append({"role": "assistant", "content": accumulated_content})
-                            asyncio.create_task(
-                                extract_memories_background(extraction_msgs, user_id, conversation_id)
-                            )
+                            extraction_msgs.append({
+                                "role": "assistant",
+                                "content": accumulated_content
+                            })
+                            asyncio.create_task(extract_memories_background(
+                                extraction_msgs, user_id, conversation_id
+                            ))
 
-                        done_data = {
+                        done_data: dict[str, Any] = {
                             'type': 'done',
-                            'tools_used': tools_used if tools_used else None
+                            'tools_used': tools_used if tools_used else None,
+                            'sources': sources_to_dict(sources) if sources else None,
                         }
                         yield f"data: {json.dumps(done_data)}\n\n"
                         return
@@ -471,7 +579,8 @@ async def generate_stream_events(
                 # No tool calls and stream done
                 done_data = {
                     'type': 'done',
-                    'tools_used': tools_used if tools_used else None
+                    'tools_used': tools_used if tools_used else None,
+                    'sources': sources_to_dict(sources) if sources else None,
                 }
                 yield f"data: {json.dumps(done_data)}\n\n"
                 return
@@ -494,8 +603,15 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
     - content: {"type": "content", "content": "text chunk"}
     - tool_start: {"type": "tool_start", "tool": "tool_name"}
     - tool_result: {"type": "tool_result", "tool": "tool_name", "success": true}
-    - done: {"type": "done", "tools_used": ["tool1", "tool2"]}
+    - done: {"type": "done", "tools_used": [...], "sources": [...]}
     - error: {"type": "error", "error": "error message"}
+
+    The "sources" field in the done event contains information about RAG sources:
+    - type: "memory" | "document" | "uploaded_doc"
+    - title: Display title
+    - snippet: Content preview
+    - score: Relevance score
+    - metadata: Additional info (path, category, etc.)
     """
     logger.info(
         "chat_stream_request",

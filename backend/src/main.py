@@ -2,10 +2,11 @@ import structlog
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import auth, chat, conversations, english, health, vault
+from src.api.routes import auth, chat, conversations, documents, english, health, rag, vault
 from src.config import get_settings
 from src.infrastructure.database import init_db
 from src.infrastructure.vector_store.qdrant_client import init_qdrant_collections, get_qdrant_client
+from src.infrastructure.vector_store.uploaded_document_repository import get_uploaded_document_repository
 from src.infrastructure.embeddings import get_embedding_service
 
 # Configure structured logging
@@ -59,6 +60,8 @@ def create_app() -> FastAPI:
     app.include_router(vault.router, prefix=settings.api_prefix)
     app.include_router(auth.router, prefix=settings.api_prefix)
     app.include_router(english.router, prefix=settings.api_prefix)
+    app.include_router(rag.router, prefix=settings.api_prefix)
+    app.include_router(documents.router, prefix=settings.api_prefix)
 
     @app.on_event("startup")
     async def startup_event() -> None:
@@ -68,6 +71,9 @@ def create_app() -> FastAPI:
         # Initialize Qdrant collections
         try:
             await init_qdrant_collections()
+            # Initialize uploaded documents collections
+            doc_repo = get_uploaded_document_repository()
+            await doc_repo.ensure_collections()
             logger.info("qdrant_initialized")
         except Exception as e:
             logger.warning("qdrant_init_failed", error=str(e))

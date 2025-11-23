@@ -9,6 +9,7 @@ import {
   BookOpen,
   Folder,
   LogOut,
+  Database,
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { useNavigate } from 'react-router-dom'
@@ -28,6 +29,7 @@ export default function Layout() {
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/learn', icon: BookOpen, label: 'English' },
     { path: '/vault', icon: Folder, label: 'Vault' },
+    { path: '/knowledge', icon: Database, label: 'Knowledge Base' },
   ]
 
   const bottomItems = [
@@ -132,6 +134,12 @@ export default function Layout() {
                 className={`nav-pill ${location.pathname === '/dashboard' ? 'active' : ''}`}
               >
                 Dashboard
+              </Link>
+              <Link
+                to="/knowledge"
+                className={`nav-pill ${location.pathname === '/knowledge' ? 'active' : ''}`}
+              >
+                Knowledge
               </Link>
             </nav>
           </div>

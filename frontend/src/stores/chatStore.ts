@@ -3,6 +3,7 @@ import {
   Message,
   sendMessageStream,
   StreamEvent,
+  Source,
   createConversation,
   addMessageToConversation,
   getConversation,
@@ -10,13 +11,19 @@ import {
   deleteConversation as deleteConversationApi,
   ConversationListItem,
 } from '../services/api'
+import { useAuthStore } from './authStore'
 
 type StreamStatus = 'idle' | 'connecting' | 'streaming' | 'tool_executing'
+
+// Extended message with sources for assistant messages
+export interface MessageWithSources extends Message {
+  sources?: Source[]
+}
 
 interface ChatState {
   // Current conversation
   conversationId: string | null
-  messages: Message[]
+  messages: MessageWithSources[]
   isLoading: boolean
   streamStatus: StreamStatus
   currentTool: string | null
@@ -112,11 +119,24 @@ export const useChatStore = create<ChatState>((set, get) => ({
           break
 
         case 'done': {
+          // Update assistant message with sources
+          set((state) => {
+            const messages = [...state.messages]
+            const lastMessage = messages[messages.length - 1]
+            if (lastMessage && lastMessage.role === 'assistant' && event.sources) {
+              lastMessage.sources = event.sources
+            }
+            return { messages }
+          })
+
           // Save assistant message to conversation
           const finalMessages = get().messages
           const finalAssistantMessage = finalMessages[finalMessages.length - 1]
           if (currentConversationId && finalAssistantMessage?.role === 'assistant') {
-            addMessageToConversation(currentConversationId, finalAssistantMessage).catch(err => {
+            addMessageToConversation(currentConversationId, {
+              role: finalAssistantMessage.role,
+              content: finalAssistantMessage.content,
+            }).catch(err => {
               console.error('Failed to save assistant message:', err)
             })
           }
@@ -146,8 +166,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     }
 
     try {
+      // Get user_id from auth store
+      const user = useAuthStore.getState().user
+
       await sendMessageStream(
-        { messages: get().messages.slice(0, -1) },
+        {
+          messages: get().messages.slice(0, -1),
+          user_id: user?.id,
+          conversation_id: currentConversationId || undefined,
+        },
         handleStreamEvent,
         abortController.signal
       )

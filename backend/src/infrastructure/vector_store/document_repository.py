@@ -1,5 +1,7 @@
 """Document repository for vault content indexing."""
 
+import hashlib
+import uuid
 from datetime import datetime
 from typing import Any
 from dataclasses import dataclass
@@ -100,9 +102,12 @@ class DocumentRepository:
         # Prepare points for batch upsert
         points = []
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
-            chunk_id = f"{path}::{chunk.chunk_index}"
+            # Generate deterministic UUID from path and chunk index
+            chunk_key = f"{path}::{chunk.chunk_index}"
+            chunk_id = str(uuid.UUID(hashlib.md5(chunk_key.encode()).hexdigest()))
 
             payload = {
+                "chunk_key": chunk_key,  # Store original key for reference
                 "path": path,
                 "content": chunk.content,
                 "chunk_index": chunk.chunk_index,

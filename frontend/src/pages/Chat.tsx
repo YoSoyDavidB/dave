@@ -3,6 +3,7 @@ import { Send, Sparkles, Search, MoreVertical, Square, Loader2 } from 'lucide-re
 import { useChatStore } from '../stores/chatStore'
 import ChatHistory from '../components/chat/ChatHistory'
 import MarkdownMessage from '../components/chat/MarkdownMessage'
+import SourcesPanel from '../components/chat/SourcesPanel'
 import { ToolIndicatorCompact } from '../components/chat/ToolIndicator'
 
 // Futuristic smoke orb avatar component
@@ -14,12 +15,18 @@ function SmokeOrb({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   }
 
   if (size === 'lg') {
+    // Generate 15 smoke particles for a richer effect
+    const particles = Array.from({ length: 15 }).map((_, i) => (
+      <div
+        key={i}
+        className="smoke-particle-lg"
+        style={{ animationDelay: `${Math.random() * -20}s` }}
+      />
+    ));
+
     return (
       <div className={`${sizeClasses[size]} avatar-orb-large relative`}>
-        {/* Smoke particles */}
-        <div className="smoke-particle smoke-particle-1" />
-        <div className="smoke-particle smoke-particle-2" />
-        <div className="smoke-particle smoke-particle-3" />
+        <div className="smoke-container">{particles}</div>
         {/* Inner ring */}
         <div className="avatar-inner-ring" />
         {/* Core glow */}
@@ -27,7 +34,7 @@ function SmokeOrb({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
           <div className="w-8 h-8 rounded-full bg-[#F0FF3D]/30 blur-md animate-pulse" />
         </div>
       </div>
-    )
+    );
   }
 
   return (
@@ -207,10 +214,16 @@ export default function Chat() {
                           }`}
                         >
                           {message.role === 'assistant' ? (
-                            <MarkdownMessage
-                              content={message.content}
-                              isStreaming={index === messages.length - 1 && isLoading && streamStatus === 'streaming'}
-                            />
+                            <>
+                              <MarkdownMessage
+                                content={message.content}
+                                isStreaming={index === messages.length - 1 && isLoading && streamStatus === 'streaming'}
+                              />
+                              {/* Show sources panel for assistant messages with sources */}
+                              {message.sources && message.sources.length > 0 && !isLoading && (
+                                <SourcesPanel sources={message.sources} />
+                              )}
+                            </>
                           ) : (
                             <p className="text-sm leading-relaxed whitespace-pre-wrap">
                               {message.content}
