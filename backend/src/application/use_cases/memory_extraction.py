@@ -166,9 +166,11 @@ class MemoryExtractionUseCase:
             response = await client.post(
                 "/chat/completions",
                 json={
-                    "model": "anthropic/claude-3-haiku-20240307",  # Fast, cheap model for extraction
+                    # Fast, cheap model for extraction
+                    "model": "anthropic/claude-3-haiku-20240307",
                     "messages": [{"role": "user", "content": prompt}],
-                    "temperature": 0.1,  # Low temperature for consistent extraction
+                    # Low temperature for consistent extraction
+                    "temperature": 0.1,
                     "max_tokens": 1000,
                 },
             )

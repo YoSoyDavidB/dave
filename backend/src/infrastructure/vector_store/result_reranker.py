@@ -5,7 +5,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Protocol
 
-
 # Stop words to ignore in keyword matching
 STOP_WORDS = {
     "a", "an", "the", "and", "or", "but", "in", "on", "at", "to", "for",

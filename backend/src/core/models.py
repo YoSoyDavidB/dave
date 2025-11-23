@@ -1,6 +1,6 @@
+import uuid
 from datetime import datetime
 from enum import Enum
-import uuid
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship

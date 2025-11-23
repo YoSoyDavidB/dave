@@ -1,8 +1,9 @@
 """Tests for the embedding service."""
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import httpx
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from src.infrastructure.embeddings.embedding_service import (
     EMBEDDING_MODEL,

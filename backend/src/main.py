@@ -1,9 +1,17 @@
 import structlog
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api.routes import auth, chat, conversations, documents, english, health, rag, vault
+from src.api.routes import (
+    auth,
+    chat,
+    conversations,
+    documents,
+    english,
+    health,
+    rag,
+    vault,
+)
 from src.config import get_settings
 from src.infrastructure.database import init_db
 from src.infrastructure.embeddings import get_embedding_service

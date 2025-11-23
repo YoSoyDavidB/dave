@@ -93,10 +93,15 @@ def extract_sources_from_rag_context(result: RAGContext) -> list[SourceInfo]:
 
     # Extract memory sources
     for memory in result.memories:
+        snippet = (
+            memory.short_text[:150] + "..."
+            if len(memory.short_text) > 150
+            else memory.short_text
+        )
         sources.append(SourceInfo(
             type="memory",
             title=memory.memory_type.value.title(),
-            snippet=memory.short_text[:150] + "..." if len(memory.short_text) > 150 else memory.short_text,
+            snippet=snippet,
             score=memory.relevance_score,
             metadata={"memory_type": memory.memory_type.value},
         ))

@@ -380,8 +380,8 @@ async def update_document(
         tags=updated_doc.tags,
         description=updated_doc.description,
         file_size=updated_doc.file_size,
-        created_at=updated_at.isoformat(),
-        updated_at=updated_at.isoformat(),
+        created_at=updated_doc.created_at.isoformat(),
+        updated_at=updated_doc.updated_at.isoformat(),
         indexed=updated_doc.indexed,
         chunk_count=updated_doc.chunk_count,
     )

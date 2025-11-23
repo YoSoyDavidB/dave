@@ -1,6 +1,5 @@
 """Qdrant client wrapper for vector storage operations."""
 
-from functools import lru_cache
 from typing import Any
 
 import structlog

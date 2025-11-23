@@ -1,8 +1,8 @@
 """Document chunking utilities for RAG."""
 
 import re
-from dataclasses import dataclass
 from collections.abc import Iterator
+from dataclasses import dataclass
 
 
 @dataclass

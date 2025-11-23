@@ -1,9 +1,10 @@
 """Tests for RAG system components."""
 
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
+
+import pytest
 
 from src.application.use_cases.rag_query import RAGQueryUseCase, ScoredItem
 from src.application.use_cases.vault_indexing import (
@@ -30,7 +31,6 @@ from src.infrastructure.vector_store.result_reranker import (
     mmr_rerank,
     recency_score,
 )
-
 
 # ============================================================================
 # Chunking Tests
@@ -470,7 +470,9 @@ class TestDocumentRepositoryMocked:
 
     @pytest.fixture
     def mock_embeddings(self):
-        with patch('src.infrastructure.vector_store.document_repository.get_embedding_service') as mock:
+        with patch(
+            'src.infrastructure.vector_store.document_repository.get_embedding_service'
+        ) as mock:
             service = AsyncMock()
             service.embed_texts = AsyncMock(return_value=[[0.1] * 1536])
             service.embed_query = AsyncMock(return_value=[0.1] * 1536)

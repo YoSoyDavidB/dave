@@ -1,7 +1,8 @@
 """Tests for the Qdrant client wrapper."""
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from src.infrastructure.vector_store.qdrant_client import (
     DOCUMENTS_COLLECTION,
