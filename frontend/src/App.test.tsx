@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, type Mock } from 'vitest'
 import App from './App'
 import { useAuthStore } from './stores/authStore'
 
@@ -26,8 +26,9 @@ describe('App Routing', () => {
 
   it('renders LoginPage for unauthenticated user', async () => {
     // Mock unauthenticated state
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as Mock).mockReturnValue({
       user: null,
+      isAuthenticated: false,
       isLoading: false,
       checkAuthStatus: vi.fn(),
       login: vi.fn(),
@@ -46,8 +47,9 @@ describe('App Routing', () => {
 
   it('renders Chat page for authenticated user', async () => {
     // Mock authenticated state
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as Mock).mockReturnValue({
       user: { id: '123', email: 'test@example.com' },
+      isAuthenticated: true,
       isLoading: false,
       checkAuthStatus: vi.fn(),
       login: vi.fn(),
@@ -65,8 +67,9 @@ describe('App Routing', () => {
 
   it('navigates to Dashboard for authenticated user', async () => {
     // Mock authenticated state
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as Mock).mockReturnValue({
       user: { id: '123', email: 'test@example.com' },
+      isAuthenticated: true,
       isLoading: false,
       checkAuthStatus: vi.fn(),
       login: vi.fn(),
@@ -77,14 +80,15 @@ describe('App Routing', () => {
     setup(['/dashboard'])
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Dashboard/i })).toBeInTheDocument();
-    });
+      expect(screen.getByRole('heading', { name: /Dashboard/i })).toBeInTheDocument()
+    })
   })
 
   it('redirects to Login from a protected route if unauthenticated', async () => {
     // Mock unauthenticated state
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as Mock).mockReturnValue({
       user: null,
+      isAuthenticated: false,
       isLoading: false,
       checkAuthStatus: vi.fn(),
       login: vi.fn(),
@@ -103,17 +107,18 @@ describe('App Routing', () => {
 
   it('renders RegisterPage when navigating to /register', async () => {
     // Mock unauthenticated state for clarity, though /register is usually public
-    (useAuthStore as unknown as jest.Mock).mockReturnValue({
+    (useAuthStore as unknown as Mock).mockReturnValue({
       user: null,
+      isAuthenticated: false,
       isLoading: false,
       checkAuthStatus: vi.fn(),
     });
 
-    setup(['/register']);
+    setup(['/register'])
 
     await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Create an account/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /Sign up/i })).toBeInTheDocument();
-    });
+      expect(screen.getByRole('heading', { name: /Create account/i })).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: /Create account/i })).toBeInTheDocument()
+    })
   });
 })
