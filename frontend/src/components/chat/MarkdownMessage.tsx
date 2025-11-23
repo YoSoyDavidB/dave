@@ -1,0 +1,178 @@
+import ReactMarkdown from 'react-markdown'
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
+import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
+import { Copy, Check } from 'lucide-react'
+import { useState } from 'react'
+
+interface MarkdownMessageProps {
+  content: string
+  isStreaming?: boolean
+}
+
+// Custom code block with copy button
+function CodeBlock({ language, children }: { language: string; children: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(children)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  return (
+    <div className="relative group my-3">
+      {/* Language badge and copy button */}
+      <div className="absolute top-0 left-0 right-0 flex items-center justify-between px-3 py-1.5 bg-[#1a1a24] rounded-t-lg border-b border-white/[0.06]">
+        <span className="text-xs text-zinc-500 font-mono">{language || 'code'}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 text-xs text-zinc-500 hover:text-[#F0FF3D] transition-colors"
+        >
+          {copied ? (
+            <>
+              <Check size={12} />
+              <span>Copied!</span>
+            </>
+          ) : (
+            <>
+              <Copy size={12} />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Code content */}
+      <SyntaxHighlighter
+        language={language || 'text'}
+        style={oneDark}
+        customStyle={{
+          margin: 0,
+          padding: '2.5rem 1rem 1rem 1rem',
+          borderRadius: '0.5rem',
+          fontSize: '0.8rem',
+          background: '#12121c',
+          border: '1px solid rgba(255, 255, 255, 0.06)',
+        }}
+        codeTagProps={{
+          style: {
+            fontFamily: 'JetBrains Mono, Fira Code, monospace',
+          }
+        }}
+      >
+        {children.trim()}
+      </SyntaxHighlighter>
+    </div>
+  )
+}
+
+export default function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) {
+  return (
+    <div className="text-sm leading-relaxed">
+      <ReactMarkdown
+        components={{
+          // Code blocks with syntax highlighting
+          code({ className, children, ...props }) {
+            const match = /language-(\w+)/.exec(className || '')
+            const isInline = !match && !className
+
+            if (isInline) {
+              return (
+                <code className="bg-[#F0FF3D]/10 text-[#F0FF3D] px-1.5 py-0.5 rounded text-xs font-mono" {...props}>
+                  {children}
+                </code>
+              )
+            }
+
+            return (
+              <CodeBlock language={match ? match[1] : ''}>
+                {String(children).replace(/\n$/, '')}
+              </CodeBlock>
+            )
+          },
+
+          // Pre tag - let code handle it
+          pre({ children }) {
+            return <>{children}</>
+          },
+
+          // Bold text with accent color
+          strong({ children }) {
+            return <strong className="text-[#F0FF3D] font-semibold">{children}</strong>
+          },
+
+          // Italic
+          em({ children }) {
+            return <em className="text-zinc-300 italic">{children}</em>
+          },
+
+          // Paragraphs
+          p({ children }) {
+            return <p className="mb-3 last:mb-0">{children}</p>
+          },
+
+          // Unordered lists
+          ul({ children }) {
+            return <ul className="list-disc list-outside ml-4 mb-3 space-y-1">{children}</ul>
+          },
+
+          // Ordered lists
+          ol({ children }) {
+            return <ol className="list-decimal list-outside ml-4 mb-3 space-y-1">{children}</ol>
+          },
+
+          // List items
+          li({ children }) {
+            return <li className="text-zinc-200">{children}</li>
+          },
+
+          // Links
+          a({ href, children }) {
+            return (
+              <a
+                href={href}
+                className="text-[#F0FF3D] hover:text-[#F0FF3D]/80 underline underline-offset-2"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {children}
+              </a>
+            )
+          },
+
+          // Blockquotes
+          blockquote({ children }) {
+            return (
+              <blockquote className="border-l-2 border-[#F0FF3D]/50 pl-3 my-3 text-zinc-400 italic">
+                {children}
+              </blockquote>
+            )
+          },
+
+          // Horizontal rule
+          hr() {
+            return <hr className="border-t border-white/[0.08] my-4" />
+          },
+
+          // Headers
+          h1({ children }) {
+            return <h1 className="text-lg font-semibold text-white mt-4 mb-2">{children}</h1>
+          },
+          h2({ children }) {
+            return <h2 className="text-base font-semibold text-white mt-3 mb-2">{children}</h2>
+          },
+          h3({ children }) {
+            return <h3 className="text-sm font-semibold text-white mt-3 mb-1">{children}</h3>
+          },
+        }}
+      >
+        {content}
+      </ReactMarkdown>
+
+      {/* Streaming cursor */}
+      {isStreaming && (
+        <span className="inline-block w-2 h-4 ml-0.5 bg-[#F0FF3D] animate-pulse align-middle" />
+      )}
+    </div>
+  )
+}

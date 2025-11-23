@@ -297,9 +297,9 @@ body > #root {
 
 /* Message bubble styling */
 .message-user {
-  background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-  color: #0a0a0f;
-  box-shadow: 0 0 20px rgba(240, 255, 61, 0.2);
+  background: rgba(240, 255, 61, 0.12);
+  border: 1px solid rgba(240, 255, 61, 0.25);
+  color: var(--text-primary);
 }
 
 .message-assistant {
@@ -647,3 +647,63 @@ body > #root {
   background: var(--accent-primary);
   box-shadow: 0 0 8px rgba(240, 255, 61, 0.6);
 }
+
+/* ========================================
+   PROSE STYLES FOR MARKDOWN MESSAGES
+   ======================================== */
+
+.prose-invert {
+  color: var(--text-primary);
+}
+
+.prose-sm {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Code block styles */
+.message-assistant pre {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  overflow-x: auto;
+  margin: 0.5rem 0;
+}
+
+.message-assistant pre code {
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* Blockquote styles */
+.message-assistant blockquote {
+  border-left: 3px solid var(--accent-primary);
+  padding-left: 1rem;
+  margin: 0.5rem 0;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Horizontal rule */
+.message-assistant hr {
+  border: none;
+  border-top: 1px solid var(--border-color);
+  margin: 1rem 0;
+}
+
+/* Headers in messages */
+.message-assistant h1,
+.message-assistant h2,
+.message-assistant h3 {
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.message-assistant h1 { font-size: 1.25rem; }
+.message-assistant h2 { font-size: 1.1rem; }
+.message-assistant h3 { font-size: 1rem; }

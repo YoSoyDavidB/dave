@@ -1,8 +1,10 @@
 from datetime import datetime
 from enum import Enum
+from typing import Optional
+import uuid
 
-from sqlalchemy import DateTime, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, ForeignKey, String, Text
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.infrastructure.database import Base
 
@@ -40,3 +42,63 @@ class EnglishCorrection(Base):
 
     def __repr__(self) -> str:
         return f"<EnglishCorrection {self.id}: {self.original_text[:30]}...>"
+
+
+class Conversation(Base):
+    """Model for chat conversations."""
+
+    __tablename__ = "conversations"
+
+    id: Mapped[str] = mapped_column(
+        String(36), primary_key=True, default=lambda: str(uuid.uuid4())
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    # Title (auto-generated from first message or set manually)
+    title: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+
+    # Relationship to messages
+    messages: Mapped[list["Message"]] = relationship(
+        "Message", back_populates="conversation", cascade="all, delete-orphan",
+        order_by="Message.created_at"
+    )
+
+    def __repr__(self) -> str:
+        return f"<Conversation {self.id}: {self.title or 'Untitled'}>"
+
+
+class Message(Base):
+    """Model for individual chat messages."""
+
+    __tablename__ = "messages"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, nullable=False
+    )
+
+    # Foreign key to conversation
+    conversation_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("conversations.id", ondelete="CASCADE"), nullable=False
+    )
+
+    # Message content
+    role: Mapped[str] = mapped_column(String(20), nullable=False)  # "user" or "assistant"
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # Optional metadata
+    model: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    tools_used: Mapped[Optional[str]] = mapped_column(Text, nullable=True)  # JSON array as string
+
+    # Relationship
+    conversation: Mapped["Conversation"] = relationship(
+        "Conversation", back_populates="messages"
+    )
+
+    def __repr__(self) -> str:
+        return f"<Message {self.id}: {self.role} - {self.content[:30]}...>"

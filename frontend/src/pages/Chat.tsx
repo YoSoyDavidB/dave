@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect, FormEvent } from 'react'
-import { Send, Sparkles, Search, MoreVertical } from 'lucide-react'
+import { Send, Sparkles, Search, MoreVertical, Square, Loader2, Wrench } from 'lucide-react'
 import { useChatStore } from '../stores/chatStore'
 import ChatHistory from '../components/chat/ChatHistory'
+import MarkdownMessage from '../components/chat/MarkdownMessage'
 
 // Futuristic smoke orb avatar component
 function SmokeOrb({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
@@ -39,10 +40,56 @@ function SmokeOrb({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   )
 }
 
+// Streaming indicator component
+function StreamingIndicator({ status, tool }: { status: string; tool: string | null }) {
+  if (status === 'connecting') {
+    return (
+      <div className="flex items-center gap-2 text-zinc-500 text-sm">
+        <Loader2 size={14} className="animate-spin" />
+        <span>Connecting...</span>
+      </div>
+    )
+  }
+
+  if (status === 'tool_executing' && tool) {
+    return (
+      <div className="flex items-center gap-2 text-[#F0FF3D] text-sm">
+        <Wrench size={14} className="animate-pulse" />
+        <span>Using {tool.replace(/_/g, ' ')}...</span>
+      </div>
+    )
+  }
+
+  if (status === 'streaming') {
+    return (
+      <div className="flex items-center gap-2 text-[#F0FF3D]/70 text-sm">
+        <div className="flex space-x-1">
+          <div className="w-1.5 h-1.5 bg-[#F0FF3D] rounded-full animate-pulse" />
+          <div className="w-1.5 h-1.5 bg-[#F0FF3D] rounded-full animate-pulse" style={{ animationDelay: '0.2s' }} />
+          <div className="w-1.5 h-1.5 bg-[#F0FF3D] rounded-full animate-pulse" style={{ animationDelay: '0.4s' }} />
+        </div>
+        <span>Typing...</span>
+      </div>
+    )
+  }
+
+  return null
+}
+
 export default function Chat() {
   const [input, setInput] = useState('')
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const { messages, isLoading, error, sendMessage, clearMessages } = useChatStore()
+  const {
+    messages,
+    isLoading,
+    streamStatus,
+    currentTool,
+    error,
+    sendMessage,
+    cancelStream,
+    startNewConversation,
+    clearError
+  } = useChatStore()
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -62,8 +109,16 @@ export default function Chat() {
   }
 
   const handleNewChat = () => {
-    clearMessages()
+    startNewConversation()
   }
+
+  const handleCancel = () => {
+    cancelStream()
+  }
+
+  // Check if the last assistant message is empty (still streaming)
+  const lastMessage = messages[messages.length - 1]
+  const isStreamingEmpty = isLoading && lastMessage?.role === 'assistant' && !lastMessage.content
 
   return (
     <div className="flex h-full">
@@ -78,9 +133,15 @@ export default function Chat() {
             <div>
               <h2 className="text-white font-medium flex items-center gap-2">
                 Dave
-                <span className="w-2 h-2 rounded-full notification-dot animate-pulse"></span>
+                <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-[#F0FF3D] animate-pulse' : 'notification-dot'}`}></span>
               </h2>
-              <span className="text-xs text-zinc-500">Always ready to help</span>
+              <span className="text-xs text-zinc-500">
+                {isLoading ? (
+                  <StreamingIndicator status={streamStatus} tool={currentTool} />
+                ) : (
+                  'Always ready to help'
+                )}
+              </span>
             </div>
           </div>
           <button className="p-2.5 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-zinc-500 hover:text-[#F0FF3D]">
@@ -125,53 +186,85 @@ export default function Chat() {
               </div>
             ) : (
               <div className="space-y-6">
-                {messages.map((message, index) => (
-                  <div
-                    key={index}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className="flex items-start gap-3 max-w-[80%]">
-                      {message.role === 'assistant' && (
-                        <div className="flex-shrink-0">
-                          <SmokeOrb size="sm" />
+                {messages.map((message, index) => {
+                  // Skip empty assistant messages that are still being streamed
+                  if (message.role === 'assistant' && !message.content && index === messages.length - 1 && isLoading) {
+                    return null
+                  }
+
+                  return (
+                    <div
+                      key={index}
+                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className="flex items-start gap-3 max-w-[80%]">
+                        {message.role === 'assistant' && (
+                          <div className="flex-shrink-0">
+                            <SmokeOrb size="sm" />
+                          </div>
+                        )}
+                        <div
+                          className={`px-4 py-3 rounded-2xl ${
+                            message.role === 'user'
+                              ? 'message-user rounded-br-md'
+                              : 'message-assistant rounded-bl-md'
+                          }`}
+                        >
+                          {message.role === 'assistant' ? (
+                            <MarkdownMessage
+                              content={message.content}
+                              isStreaming={index === messages.length - 1 && isLoading && streamStatus === 'streaming'}
+                            />
+                          ) : (
+                            <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                              {message.content}
+                            </p>
+                          )}
                         </div>
-                      )}
-                      <div
-                        className={`px-4 py-3 rounded-2xl ${
-                          message.role === 'user'
-                            ? 'message-user rounded-br-md'
-                            : 'message-assistant rounded-bl-md'
-                        }`}
-                      >
-                        <p className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {message.content}
-                        </p>
                       </div>
                     </div>
-                  </div>
-                ))}
-                {isLoading && (
+                  )
+                })}
+
+                {/* Show typing indicator when connecting or waiting for content */}
+                {isLoading && (isStreamingEmpty || streamStatus === 'connecting' || streamStatus === 'tool_executing') && (
                   <div className="flex justify-start">
                     <div className="flex items-start gap-3">
                       <div className="flex-shrink-0">
                         <SmokeOrb size="sm" />
                       </div>
                       <div className="message-assistant px-4 py-3 rounded-2xl rounded-bl-md">
-                        <div className="flex space-x-1.5">
-                          <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" />
-                          <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                          <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                        </div>
+                        {streamStatus === 'tool_executing' && currentTool ? (
+                          <div className="flex items-center gap-2 text-[#F0FF3D]">
+                            <Wrench size={14} className="animate-spin" />
+                            <span className="text-sm">Using {currentTool.replace(/_/g, ' ')}...</span>
+                          </div>
+                        ) : (
+                          <div className="flex space-x-1.5">
+                            <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" />
+                            <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                            <div className="w-2 h-2 bg-[#F0FF3D] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
                 )}
+
                 <div ref={messagesEndRef} />
               </div>
             )}
+
+            {/* Error message */}
             {error && (
-              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm">
-                {error}
+              <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-sm flex items-center justify-between">
+                <span>{error}</span>
+                <button
+                  onClick={clearError}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Dismiss
+                </button>
               </div>
             )}
           </div>
@@ -191,13 +284,24 @@ export default function Chat() {
                     disabled={isLoading}
                     className="flex-1 bg-transparent px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50"
                   />
-                  <button
-                    type="submit"
-                    disabled={isLoading || !input.trim()}
-                    className="p-3 btn-gradient rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
-                  >
-                    <Send size={18} />
-                  </button>
+                  {isLoading ? (
+                    <button
+                      type="button"
+                      onClick={handleCancel}
+                      className="p-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-all duration-200"
+                      title="Cancel"
+                    >
+                      <Square size={18} />
+                    </button>
+                  ) : (
+                    <button
+                      type="submit"
+                      disabled={!input.trim()}
+                      className="p-3 btn-gradient rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                    >
+                      <Send size={18} />
+                    </button>
+                  )}
                 </div>
 
                 {/* Options row */}

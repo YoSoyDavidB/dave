@@ -1,37 +1,51 @@
-import { Plus, MessageSquare, Search } from 'lucide-react'
+import { useEffect } from 'react'
+import { Plus, MessageSquare, Search, Trash2 } from 'lucide-react'
+import { useChatStore } from '../../stores/chatStore'
 
 interface ChatHistoryProps {
   onNewChat: () => void
 }
 
 export default function ChatHistory({ onNewChat }: ChatHistoryProps) {
-  // Mock data - in the future this will come from a store
-  const historyGroups = [
-    {
-      label: 'Today',
-      items: [
-        { id: '1', title: 'Help me practice English conversation...', date: 'today' },
-        { id: '2', title: 'Create a daily note for my meeting...', date: 'today' },
-        { id: '3', title: 'Review my weekly goals and tasks...', date: 'today' },
-        { id: '4', title: 'Grammar tips for present perfect...', date: 'today' },
-        { id: '5', title: 'Organize notes about the project...', date: 'today' },
-      ],
-    },
-    {
-      label: '5 Days Ago',
-      items: [
-        { id: '6', title: 'Schedule reminder for dentist...', date: '5 days ago' },
-        { id: '7', title: 'Ideas for productivity system...', date: '5 days ago' },
-        { id: '8', title: 'English tips for writing emails...', date: '5 days ago' },
-      ],
-    },
-    {
-      label: '7 Days Ago',
-      items: [
-        { id: '9', title: 'Weekly review and planning...', date: '7 days ago' },
-      ],
-    },
-  ]
+  const {
+    conversationId,
+    conversationGroups,
+    isLoadingConversations,
+    loadConversations,
+    loadConversation,
+    deleteConversation,
+  } = useChatStore()
+
+  // Load conversations on mount
+  useEffect(() => {
+    loadConversations()
+  }, [loadConversations])
+
+  // Calculate total conversations
+  const totalConversations = Object.values(conversationGroups).reduce(
+    (acc, group) => acc + group.length,
+    0
+  )
+
+  // Convert groups object to array for rendering
+  const groupOrder = ['Today', 'Yesterday', 'This Week', 'Older']
+  const historyGroups = groupOrder
+    .filter((label) => conversationGroups[label]?.length > 0)
+    .map((label) => ({
+      label,
+      items: conversationGroups[label],
+    }))
+
+  const handleConversationClick = async (id: string) => {
+    if (id !== conversationId) {
+      await loadConversation(id)
+    }
+  }
+
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    await deleteConversation(id)
+  }
 
   return (
     <div className="w-80 h-full glass flex flex-col border-l border-white/[0.06]">
@@ -61,34 +75,74 @@ export default function ChatHistory({ onNewChat }: ChatHistoryProps) {
 
       {/* History list */}
       <div className="flex-1 overflow-y-auto px-3 pb-3 space-y-5">
-        {historyGroups.map((group) => (
-          <div key={group.label}>
-            <h3 className="text-xs text-zinc-600 font-medium mb-2 px-2 uppercase tracking-wider">
-              {group.label}
-            </h3>
-            <div className="space-y-1">
-              {group.items.map((item) => (
-                <div key={item.id} className="history-item group">
-                  <div className="w-9 h-9 rounded-xl bg-[rgba(20,20,32,0.8)] border border-white/[0.06] flex items-center justify-center flex-shrink-0 group-hover:border-[#F0FF3D]/30 group-hover:bg-[#F0FF3D]/5 transition-all">
-                    <MessageSquare size={14} className="text-zinc-500 group-hover:text-[#F0FF3D] transition-colors" />
-                  </div>
-                  <span className="text-sm text-zinc-400 truncate group-hover:text-white transition-colors">
-                    {item.title}
-                  </span>
-                </div>
-              ))}
-            </div>
+        {isLoadingConversations ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-pulse text-zinc-500 text-sm">Loading...</div>
           </div>
-        ))}
+        ) : historyGroups.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8 text-zinc-500">
+            <MessageSquare size={32} className="mb-2 opacity-50" />
+            <p className="text-sm">No conversations yet</p>
+            <p className="text-xs mt-1">Start a new chat to begin</p>
+          </div>
+        ) : (
+          historyGroups.map((group) => (
+            <div key={group.label}>
+              <h3 className="text-xs text-zinc-600 font-medium mb-2 px-2 uppercase tracking-wider">
+                {group.label}
+              </h3>
+              <div className="space-y-1">
+                {group.items.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleConversationClick(item.id)}
+                    className={`history-item group cursor-pointer ${
+                      item.id === conversationId ? 'bg-[#F0FF3D]/10 border-[#F0FF3D]/30' : ''
+                    }`}
+                  >
+                    <div
+                      className={`w-9 h-9 rounded-xl border flex items-center justify-center flex-shrink-0 transition-all ${
+                        item.id === conversationId
+                          ? 'bg-[#F0FF3D]/10 border-[#F0FF3D]/30'
+                          : 'bg-[rgba(20,20,32,0.8)] border-white/[0.06] group-hover:border-[#F0FF3D]/30 group-hover:bg-[#F0FF3D]/5'
+                      }`}
+                    >
+                      <MessageSquare
+                        size={14}
+                        className={`transition-colors ${
+                          item.id === conversationId
+                            ? 'text-[#F0FF3D]'
+                            : 'text-zinc-500 group-hover:text-[#F0FF3D]'
+                        }`}
+                      />
+                    </div>
+                    <span
+                      className={`text-sm truncate flex-1 transition-colors ${
+                        item.id === conversationId
+                          ? 'text-white'
+                          : 'text-zinc-400 group-hover:text-white'
+                      }`}
+                    >
+                      {item.title}
+                    </span>
+                    <button
+                      onClick={(e) => handleDelete(e, item.id)}
+                      className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-500/20 text-zinc-500 hover:text-red-400 transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Footer */}
       <div className="p-4 border-t border-white/[0.06]">
         <div className="flex items-center justify-between text-xs text-zinc-600">
-          <span>9 conversations</span>
-          <button className="text-[#F0FF3D]/70 hover:text-[#F0FF3D] transition-colors">
-            Clear all
-          </button>
+          <span>{totalConversations} conversation{totalConversations !== 1 ? 's' : ''}</span>
         </div>
       </div>
     </div>
