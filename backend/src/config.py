@@ -31,9 +31,11 @@ class Settings(BaseSettings):
     # IMPORTANT: Change this in production!
     jwt_algorithm: str = "HS256"
 
+    # Registration (for private registration endpoint)
+    registration_secret: str = "change-this-registration-secret-in-production"
+
     # Redis
     redis_url: str = "redis://localhost:6379"
-
 
     # Qdrant
     qdrant_url: str = "http://localhost:6333"

@@ -47,7 +47,7 @@ async def get_token_from_cookie(request: Request) -> str:
 
 async def get_current_user(
     db: Annotated[AsyncSession, Depends(get_db)],
-    token: Annotated[str, Depends(get_token_from_cookie)] # Changed from oauth2_scheme
+    token: Annotated[str, Depends(get_token_from_cookie)],  # Changed from oauth2_scheme
 ) -> User:
     """Dependency to get the current authenticated user."""
     credentials_exception = HTTPException(
@@ -65,14 +65,40 @@ async def get_current_user(
     return user
 
 
-@router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
-async def register_user(user_in: UserCreate, db: Annotated[AsyncSession, Depends(get_db)]):
-    """Register a new user."""
+@router.post(
+    "/register-secret-7x9k2m4n", response_model=UserResponse, status_code=status.HTTP_201_CREATED
+)
+async def register_user(
+    user_in: UserCreate,
+    db: Annotated[AsyncSession, Depends(get_db)],
+    registration_token: str | None = None,
+):
+    """Register a new user. Requires a valid registration token.
+
+    This endpoint is intentionally obscured and requires a secret token
+    to prevent unauthorized registrations.
+    """
+    # Validate registration token
+    if not registration_token or registration_token != settings.registration_secret:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN, detail="Invalid or missing registration token"
+        )
+
     existing_user = await get_user_by_email(db, user_in.email)
     if existing_user:
         raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+        )
+
+    # Validate email format more strictly
+    if not user_in.email or "@" not in user_in.email or "." not in user_in.email.split("@")[1]:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid email format")
+
+    # Validate password strength
+    if len(user_in.password) < 8:
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
+            detail="Password must be at least 8 characters long",
         )
 
     hashed_password = get_password_hash(user_in.password)
@@ -85,9 +111,7 @@ async def register_user(user_in: UserCreate, db: Annotated[AsyncSession, Depends
 
 @router.post("/login")
 async def login_for_access_token(
-    response: Response,
-    user_in: UserLogin,
-    db: Annotated[AsyncSession, Depends(get_db)]
+    response: Response, user_in: UserLogin, db: Annotated[AsyncSession, Depends(get_db)]
 ):
     """Login a user and return an access token via HttpOnly cookie."""
     user = await get_user_by_email(db, user_in.email)
@@ -105,11 +129,11 @@ async def login_for_access_token(
 
     response.set_cookie(
         key="access_token",
-        value=access_token, # Removed "Bearer " prefix
+        value=access_token,  # Removed "Bearer " prefix
         httponly=True,
-        samesite="lax", # Strict, Lax, None
-        secure=not settings.debug, # Should be True in production (HTTPS)
-        max_age=access_token_expires.total_seconds() # cookie expiration in seconds
+        samesite="lax",  # Strict, Lax, None
+        secure=not settings.debug,  # Should be True in production (HTTPS)
+        max_age=access_token_expires.total_seconds(),  # cookie expiration in seconds
     )
     return {"message": "Logged in successfully"}
 

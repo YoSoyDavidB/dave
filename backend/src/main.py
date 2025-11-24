@@ -1,6 +1,7 @@
 import structlog
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
 
 from src.api.routes import (
     auth,
@@ -55,6 +56,13 @@ def create_app() -> FastAPI:
         redoc_url="/redoc" if settings.debug else None,
     )
 
+    # Security: Trusted Host middleware (only in production)
+    if not settings.debug:
+        app.add_middleware(
+            TrustedHostMiddleware,
+            allowed_hosts=["dave.davidbuitrago.dev", "www.dave.davidbuitrago.dev"],
+        )
+
     # CORS middleware
     app.add_middleware(
         CORSMiddleware,
@@ -68,6 +76,21 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Security headers middleware
+    @app.middleware("http")
+    async def add_security_headers(request: Request, call_next):
+        response = await call_next(request)
+        # Prevent MIME type sniffing
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        # Prevent clickjacking
+        response.headers["X-Frame-Options"] = "DENY"
+        # XSS protection
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        # HSTS (only in production with HTTPS)
+        if not settings.debug:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        return response
 
     # Include routers
     app.include_router(health.router, prefix=settings.api_prefix)
