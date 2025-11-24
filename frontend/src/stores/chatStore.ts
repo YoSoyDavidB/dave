@@ -119,12 +119,17 @@ export const useChatStore = create<ChatState>((set, get) => ({
           break
 
         case 'done': {
+          // Debug: log sources
+          console.log('[DEBUG] Done event received:', event)
+          console.log('[DEBUG] Sources from event:', event.sources)
+
           // Update assistant message with sources
           set((state) => {
             const messages = [...state.messages]
             const lastMessage = messages[messages.length - 1]
             if (lastMessage && lastMessage.role === 'assistant' && event.sources) {
               lastMessage.sources = event.sources
+              console.log('[DEBUG] Sources attached to message:', lastMessage.sources)
             }
             return { messages }
           })

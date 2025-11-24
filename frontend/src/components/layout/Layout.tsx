@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   HelpCircle,
   User,
-  Bell,
   Settings,
   Home,
   BookOpen,
@@ -13,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 import { useNavigate } from 'react-router-dom'
+import NotificationBell from '../notifications/NotificationBell'
 
 export default function Layout() {
   const location = useLocation()
@@ -85,7 +85,7 @@ export default function Layout() {
               </Link>
             )
           })}
-          
+
           <button
             onClick={handleLogout}
             className="sidebar-nav-item"
@@ -146,10 +146,7 @@ export default function Layout() {
 
           {/* Right side icons */}
           <div className="flex items-center gap-3">
-            <button className="p-2.5 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-gray-400 hover:text-[#F0FF3D] relative">
-              <Bell size={20} />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 notification-dot rounded-full"></span>
-            </button>
+            <NotificationBell />
             <button className="p-2.5 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-gray-400 hover:text-[#F0FF3D]">
               <Settings size={20} />
             </button>

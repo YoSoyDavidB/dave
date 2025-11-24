@@ -113,28 +113,6 @@ class MemoryRepository:
         _, payload = result
         return Memory.from_payload(payload)
 
-    async def update(self, memory: Memory) -> Memory:
-        """Update an existing memory.
-
-        Args:
-            memory: Memory with updated fields
-
-        Returns:
-            Updated memory
-        """
-        # Re-embed if text changed (check via metadata or always re-embed)
-        memory.embedding = await self._embeddings.embed_text(memory.short_text)
-
-        await self._qdrant.upsert_point(
-            collection_name=MEMORIES_COLLECTION,
-            point_id=str(memory.memory_id),
-            vector=memory.embedding,
-            payload=memory.to_payload(),
-        )
-
-        logger.debug("memory_updated", memory_id=str(memory.memory_id))
-        return memory
-
     async def delete(self, memory_id: UUID) -> bool:
         """Delete a memory.
 
@@ -259,6 +237,47 @@ class MemoryRepository:
 
         return [Memory.from_payload(point.payload) for point in results]
 
+    async def get_by_type(
+        self,
+        user_id: str,
+        memory_type: MemoryType,
+        limit: int = 100,
+    ) -> list[Memory]:
+        """Get all memories of a specific type for a user.
+
+        Args:
+            user_id: User ID
+            memory_type: Type of memories to retrieve
+            limit: Maximum results
+
+        Returns:
+            List of memories of the specified type
+        """
+        return await self.get_by_user(
+            user_id=user_id,
+            memory_types=[memory_type],
+            limit=limit,
+        )
+
+    async def update(self, memory: Memory) -> None:
+        """Update a memory in the store.
+
+        Args:
+            memory: Memory with updated fields
+        """
+        client = await self._qdrant._get_client()
+        await client.set_payload(
+            collection_name=MEMORIES_COLLECTION,
+            payload=memory.to_payload(),
+            points=[str(memory.memory_id)],
+        )
+
+        logger.debug(
+            "memory_updated",
+            memory_id=str(memory.memory_id),
+            user_id=memory.user_id,
+        )
+
     async def mark_referenced(self, memory_id: UUID) -> Memory | None:
         """Mark a memory as referenced and boost relevance.
 
@@ -276,12 +295,7 @@ class MemoryRepository:
         memory.boost_relevance()
 
         # Update payload only (no need to re-embed)
-        client = await self._qdrant._get_client()
-        await client.set_payload(
-            collection_name=MEMORIES_COLLECTION,
-            payload=memory.to_payload(),
-            points=[str(memory_id)],
-        )
+        await self.update(memory)
 
         return memory
 

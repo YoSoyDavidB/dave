@@ -12,10 +12,10 @@ class MemoryType(str, Enum):
     """Types of memories that can be stored."""
 
     PREFERENCE = "preference"  # User preferences (e.g., "prefers concise answers")
-    FACT = "fact"              # Factual info (e.g., "is a software engineer")
-    TASK = "task"              # Tasks/todos (e.g., "wants to learn Rust")
-    GOAL = "goal"              # Long-term goals (e.g., "building a startup")
-    PROFILE = "profile"        # Profile info (e.g., "name is David")
+    FACT = "fact"  # Factual info (e.g., "is a software engineer")
+    TASK = "task"  # Tasks/todos (e.g., "wants to learn Rust")
+    GOAL = "goal"  # Long-term goals (e.g., "building a startup")
+    PROFILE = "profile"  # Profile info (e.g., "name is David")
 
 
 class Memory(BaseModel):
@@ -36,6 +36,14 @@ class Memory(BaseModel):
     num_times_referenced: int = Field(default=0, ge=0)
     source: str = ""  # conversation_id or file path
     metadata: dict[str, Any] = Field(default_factory=dict)
+
+    # Task-specific fields (only for TASK type)
+    due_date: datetime | None = None  # When the task is due
+    completed: bool = False  # Whether task is completed
+    reminded: bool = False  # Whether reminder was sent
+
+    # Goal-specific fields (only for GOAL type)
+    progress: float = Field(default=0.0, ge=0.0, le=100.0)  # Progress percentage
 
     # Embedding is stored separately in Qdrant, not in the model
     # This is just for passing around during creation
@@ -93,13 +101,48 @@ class Memory(BaseModel):
             return True
         return False
 
+    def needs_reminder(self) -> bool:
+        """Check if this task needs a reminder.
+
+        A task needs reminder if:
+        - It's a TASK type
+        - Not completed
+        - Has a due_date
+        - Due date is within 24 hours or overdue
+        - Haven't reminded yet
+
+        Returns:
+            True if reminder should be sent
+        """
+        if self.memory_type != MemoryType.TASK:
+            return False
+        if self.completed or self.reminded:
+            return False
+        if not self.due_date:
+            return False
+
+        now = datetime.utcnow()
+        time_until_due = self.due_date - now
+
+        # Remind if due within 24 hours or overdue
+        return time_until_due <= timedelta(hours=24)
+
+    def mark_completed(self) -> None:
+        """Mark task as completed."""
+        self.completed = True
+        self.relevance_score = 0.5  # Lower relevance once completed
+
+    def mark_reminded(self) -> None:
+        """Mark that reminder was sent for this task."""
+        self.reminded = True
+
     def to_payload(self) -> dict[str, Any]:
         """Convert to Qdrant payload format.
 
         Returns:
             Dict suitable for Qdrant point payload
         """
-        return {
+        payload = {
             "memory_id": str(self.memory_id),
             "user_id": self.user_id,
             "short_text": self.short_text,
@@ -110,7 +153,16 @@ class Memory(BaseModel):
             "num_times_referenced": self.num_times_referenced,
             "source": self.source,
             "metadata": self.metadata,
+            "completed": self.completed,
+            "reminded": self.reminded,
+            "progress": self.progress,
         }
+
+        # Only include due_date if it's set
+        if self.due_date:
+            payload["due_date"] = self.due_date.isoformat()
+
+        return payload
 
     @classmethod
     def from_payload(cls, payload: dict[str, Any]) -> "Memory":
@@ -122,6 +174,11 @@ class Memory(BaseModel):
         Returns:
             Memory instance
         """
+        # Parse due_date if present
+        due_date = None
+        if "due_date" in payload and payload["due_date"]:
+            due_date = datetime.fromisoformat(payload["due_date"])
+
         return cls(
             memory_id=UUID(payload["memory_id"]),
             user_id=payload["user_id"],
@@ -133,11 +190,17 @@ class Memory(BaseModel):
             num_times_referenced=payload["num_times_referenced"],
             source=payload.get("source", ""),
             metadata=payload.get("metadata", {}),
+            due_date=due_date,
+            completed=payload.get("completed", False),
+            reminded=payload.get("reminded", False),
+            progress=payload.get("progress", 0.0),
         )
 
     def __str__(self) -> str:
         return f"[{self.memory_type.value}] {self.short_text}"
 
     def __repr__(self) -> str:
-        return (f"Memory(id={self.memory_id}, type={self.memory_type.value}, "
-                f"text='{self.short_text[:30]}...')")
+        return (
+            f"Memory(id={self.memory_id}, type={self.memory_type.value}, "
+            f"text='{self.short_text[:30]}...')"
+        )

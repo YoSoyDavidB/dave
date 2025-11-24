@@ -20,14 +20,17 @@ Look for:
 1. **Preferences**: How the user likes things done (communication style,
    format preferences, etc.)
 2. **Facts**: Information about the user (job, skills, location, etc.)
-3. **Tasks**: Things the user wants to do or accomplish
-4. **Goals**: Long-term objectives or aspirations
+3. **Tasks**: Things the user wants to do or accomplish (with optional due dates)
+4. **Goals**: Long-term objectives or aspirations (with optional progress)
 5. **Profile**: Personal details (name, background, etc.)
 
 Return a JSON array of memories. Each memory should have:
 - "text": A concise statement (max 100 words) about the user in third person
 - "type": One of "preference", "fact", "task", "goal", "profile"
 - "confidence": How confident you are (0.0-1.0)
+- "due_date": (Optional, for tasks only) ISO format datetime if user mentions when
+  task should be done
+- "progress": (Optional, for goals only) Progress percentage 0-100 if user mentions progress
 
 Only include memories with confidence >= 0.7. Return empty array [] if nothing notable.
 
@@ -37,7 +40,10 @@ Example output:
    "type": "preference", "confidence": 0.9},
   {"text": "Is a software engineer working with Python and FastAPI",
    "type": "fact", "confidence": 0.95},
-  {"text": "Wants to improve English speaking skills", "type": "goal", "confidence": 0.85}
+  {"text": "Needs to finish project documentation",
+   "type": "task", "confidence": 0.85, "due_date": "2025-11-30T23:59:59Z"},
+  {"text": "Wants to improve English speaking skills",
+   "type": "goal", "confidence": 0.85, "progress": 30}
 ]
 
 Conversation:
@@ -107,6 +113,19 @@ class MemoryExtractionUseCase:
         for raw in raw_memories:
             try:
                 memory_type = MemoryType(raw["type"])
+
+                # Parse optional fields
+                due_date = None
+                if "due_date" in raw and raw["due_date"]:
+                    from datetime import datetime
+
+                    try:
+                        due_date = datetime.fromisoformat(raw["due_date"].replace("Z", "+00:00"))
+                    except ValueError:
+                        logger.warning("invalid_due_date_format", date=raw["due_date"])
+
+                progress = raw.get("progress", 0.0)
+
                 memory = Memory(
                     user_id=user_id,
                     short_text=raw["text"][:500],  # Enforce max length
@@ -114,6 +133,8 @@ class MemoryExtractionUseCase:
                     relevance_score=raw.get("confidence", 0.8),
                     source=conversation_id,
                     metadata={"extraction_confidence": raw.get("confidence", 0.8)},
+                    due_date=due_date,
+                    progress=progress,
                 )
                 memories.append(memory)
             except (KeyError, ValueError) as e:
@@ -167,7 +188,7 @@ class MemoryExtractionUseCase:
                 "/chat/completions",
                 json={
                     # Fast, cheap model for extraction
-                    "model": "anthropic/claude-3-haiku-20240307",
+                    "model": "anthropic/claude-3.5-haiku",
                     "messages": [{"role": "user", "content": prompt}],
                     # Low temperature for consistent extraction
                     "temperature": 0.1,
@@ -186,6 +207,8 @@ class MemoryExtractionUseCase:
                 if content.startswith("json"):
                     content = content[4:]
                 content = content.strip()
+
+            logger.debug("memory_extraction_raw_response", content=content[:500])
 
             memories = json.loads(content)
 

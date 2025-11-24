@@ -30,6 +30,7 @@ class SourceInfo:
     score: float
     metadata: dict[str, Any] | None = None
 
+
 MAX_TOOL_ITERATIONS = 10
 
 
@@ -94,48 +95,48 @@ def extract_sources_from_rag_context(result: RAGContext) -> list[SourceInfo]:
     # Extract memory sources
     for memory in result.memories:
         snippet = (
-            memory.short_text[:150] + "..."
-            if len(memory.short_text) > 150
-            else memory.short_text
+            memory.short_text[:150] + "..." if len(memory.short_text) > 150 else memory.short_text
         )
-        sources.append(SourceInfo(
-            type="memory",
-            title=memory.memory_type.value.title(),
-            snippet=snippet,
-            score=memory.relevance_score,
-            metadata={"memory_type": memory.memory_type.value},
-        ))
+        sources.append(
+            SourceInfo(
+                type="memory",
+                title=memory.memory_type.value.title(),
+                snippet=snippet,
+                score=memory.relevance_score,
+                metadata={"memory_type": memory.memory_type.value},
+            )
+        )
 
     # Extract vault document sources
     for doc in result.documents:
         title = doc.path.split("/")[-1].replace(".md", "")
         if doc.heading:
             title = f"{title} > {doc.heading}"
-        sources.append(SourceInfo(
-            type="document",
-            title=title,
-            snippet=(
-                doc.content[:150] + "..."
-                if len(doc.content) > 150
-                else doc.content
-            ),
-            score=doc.score,
-            metadata={"path": doc.path, "heading": doc.heading},
-        ))
+        sources.append(
+            SourceInfo(
+                type="document",
+                title=title,
+                snippet=(doc.content[:150] + "..." if len(doc.content) > 150 else doc.content),
+                score=doc.score,
+                metadata={"path": doc.path, "heading": doc.heading},
+            )
+        )
 
     # Extract uploaded document sources
     for udoc in result.uploaded_docs:
-        sources.append(SourceInfo(
-            type="uploaded_doc",
-            title=f"{udoc.filename}",
-            snippet=udoc.content[:150] + "..." if len(udoc.content) > 150 else udoc.content,
-            score=udoc.score,
-            metadata={
-                "document_id": udoc.document_id,
-                "category": udoc.category,
-                "chunk_index": udoc.chunk_index,
-            },
-        ))
+        sources.append(
+            SourceInfo(
+                type="uploaded_doc",
+                title=f"{udoc.filename}",
+                snippet=udoc.content[:150] + "..." if len(udoc.content) > 150 else udoc.content,
+                score=udoc.score,
+                metadata={
+                    "document_id": udoc.document_id,
+                    "category": udoc.category,
+                    "chunk_index": udoc.chunk_index,
+                },
+            )
+        )
 
     return sources
 
@@ -213,7 +214,13 @@ async def extract_memories_background(
             conversation_id=conversation_id,
         )
     except Exception as e:
-        logger.error("background_memory_extraction_failed", error=str(e))
+        import traceback
+
+        logger.error(
+            "background_memory_extraction_failed",
+            error=str(e),
+            traceback=traceback.format_exc(),
+        )
 
 
 SYSTEM_PROMPT = """You are Dave, an AI assistant who's been the user's best friend since forever.
@@ -240,6 +247,18 @@ from waterfall to DevOps chaos.
 - "Let me check your vault... *deploys to production on Friday*... just kidding"
 - "That's what she... said the PM about the deadline"
 - "sudo make me a sandwich" vibes
+
+## CONTEXT & KNOWLEDGE ACCESS
+
+**IMPORTANT: You have relevant context automatically provided below**
+When you see context sections like "User Context (from memory)", "Relevant Knowledge (from vault)",
+or "Relevant Documents (uploaded)", that information is ALREADY retrieved and ready to use.
+You should answer questions directly using that context WITHOUT calling search tools.
+
+Only use vault tools (search_vault, read_note) when:
+- The context provided is insufficient or you need more specific details
+- The user explicitly asks you to search or create notes
+- You need to update/create content in the vault
 
 ## OBSIDIAN VAULT ACCESS
 You have access to the user's Obsidian vault (PARA method):
@@ -302,8 +321,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatR
 
         # Get last user message for memory search
         last_user_msg = next(
-            (m.content for m in reversed(request.messages) if m.role == "user"),
-            ""
+            (m.content for m in reversed(request.messages) if m.role == "user"), ""
         )
 
         # Inject RAG context (memories + relevant documents)
@@ -366,11 +384,13 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatR
                         result = result[:10000] + "\n\n[Content truncated...]"
 
                     # Add tool result to messages
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call["id"],
-                        "content": result,
-                    })
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call["id"],
+                            "content": result,
+                        }
+                    )
             else:
                 # No more tool calls, return the response
                 logger.info(
@@ -386,8 +406,7 @@ async def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatR
                 if request.user_id and request.conversation_id:
                     # Build conversation for extraction (user messages + final assistant response)
                     extraction_messages = [
-                        {"role": m.role, "content": m.content}
-                        for m in request.messages
+                        {"role": m.role, "content": m.content} for m in request.messages
                     ]
                     extraction_messages.append({"role": "assistant", "content": assistant_content})
 
@@ -462,10 +481,7 @@ async def generate_stream_events(
     system_prompt = SYSTEM_PROMPT
 
     # Get last user message for memory search
-    last_user_msg = next(
-        (m["content"] for m in reversed(messages) if m.get("role") == "user"),
-        ""
-    )
+    last_user_msg = next((m["content"] for m in reversed(messages) if m.get("role") == "user"), "")
 
     # Inject RAG context (memories + relevant documents)
     if last_user_msg:
@@ -502,7 +518,7 @@ async def generate_stream_events(
                     tool_calls_received = chunk.get("tool_calls", [])
 
                 elif chunk_type == "error":
-                    error_msg = chunk.get('error', 'Unknown error')
+                    error_msg = chunk.get("error", "Unknown error")
                     yield f"data: {json.dumps({'type': 'error', 'error': error_msg})}\n\n"
                     return
 
@@ -513,18 +529,19 @@ async def generate_stream_events(
                         # Schedule memory extraction in background
                         if user_id and conversation_id and accumulated_content:
                             extraction_msgs = messages.copy()
-                            extraction_msgs.append({
-                                "role": "assistant",
-                                "content": accumulated_content
-                            })
-                            asyncio.create_task(extract_memories_background(
-                                extraction_msgs, user_id, conversation_id
-                            ))
+                            extraction_msgs.append(
+                                {"role": "assistant", "content": accumulated_content}
+                            )
+                            asyncio.create_task(
+                                extract_memories_background(
+                                    extraction_msgs, user_id, conversation_id
+                                )
+                            )
 
                         done_data: dict[str, Any] = {
-                            'type': 'done',
-                            'tools_used': tools_used if tools_used else None,
-                            'sources': sources_to_dict(sources) if sources else None,
+                            "type": "done",
+                            "tools_used": tools_used if tools_used else None,
+                            "sources": sources_to_dict(sources) if sources else None,
                         }
                         yield f"data: {json.dumps(done_data)}\n\n"
                         return
@@ -569,27 +586,25 @@ async def generate_stream_events(
                         result = f"Error executing tool: {str(e)}"
 
                     # Notify client of tool result
-                    tool_result_data = {
-                        'type': 'tool_result',
-                        'tool': tool_name,
-                        'success': True
-                    }
+                    tool_result_data = {"type": "tool_result", "tool": tool_name, "success": True}
                     yield f"data: {json.dumps(tool_result_data)}\n\n"
 
                     # Add tool result to conversation
-                    full_messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.get("id", f"call_{tool_name}"),
-                        "content": result,
-                    })
+                    full_messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": tool_call.get("id", f"call_{tool_name}"),
+                            "content": result,
+                        }
+                    )
 
                 # Continue loop to get response after tool execution
             else:
                 # No tool calls and stream done
                 done_data = {
-                    'type': 'done',
-                    'tools_used': tools_used if tools_used else None,
-                    'sources': sources_to_dict(sources) if sources else None,
+                    "type": "done",
+                    "tools_used": tools_used if tools_used else None,
+                    "sources": sources_to_dict(sources) if sources else None,
                 }
                 yield f"data: {json.dumps(done_data)}\n\n"
                 return

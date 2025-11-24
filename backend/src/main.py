@@ -9,12 +9,14 @@ from src.api.routes import (
     documents,
     english,
     health,
+    proactive,
     rag,
     vault,
 )
 from src.config import get_settings
 from src.infrastructure.database import init_db
 from src.infrastructure.embeddings import get_embedding_service
+from src.infrastructure.scheduler import get_scheduler
 from src.infrastructure.vector_store.qdrant_client import (
     get_qdrant_client,
     init_qdrant_collections,
@@ -30,7 +32,7 @@ structlog.configure(
         structlog.stdlib.add_logger_name,
         structlog.stdlib.add_log_level,
         structlog.processors.TimeStamper(fmt="iso"),
-        structlog.processors.JSONRenderer()
+        structlog.processors.JSONRenderer(),
     ],
     wrapper_class=structlog.stdlib.BoundLogger,
     context_class=dict,
@@ -60,7 +62,7 @@ def create_app() -> FastAPI:
             "http://localhost:5173",
             "http://localhost:5174",
             "http://localhost:5175",
-            "http://localhost:5176",
+            "https://dave.davidbuitrago.dev",
         ],  # Vite dev server ports
         allow_credentials=True,
         allow_methods=["*"],
@@ -76,6 +78,7 @@ def create_app() -> FastAPI:
     app.include_router(english.router, prefix=settings.api_prefix)
     app.include_router(rag.router, prefix=settings.api_prefix)
     app.include_router(documents.router, prefix=settings.api_prefix)
+    app.include_router(proactive.router, prefix=settings.api_prefix + "/proactive")
 
     @app.on_event("startup")
     async def startup_event() -> None:
@@ -92,10 +95,24 @@ def create_app() -> FastAPI:
         except Exception as e:
             logger.warning("qdrant_init_failed", error=str(e))
 
+        # Start background scheduler
+        try:
+            scheduler = get_scheduler()
+            scheduler.start()
+        except Exception as e:
+            logger.warning("scheduler_start_failed", error=str(e))
+
         logger.info("application_started", app_name=settings.app_name)
 
     @app.on_event("shutdown")
     async def shutdown_event() -> None:
+        # Shutdown scheduler
+        try:
+            scheduler = get_scheduler()
+            scheduler.shutdown()
+        except Exception:
+            pass
+
         # Close Qdrant client
         try:
             qdrant = get_qdrant_client()
