@@ -6,7 +6,6 @@ import EnglishProgress from './pages/EnglishProgress'
 import VaultBrowser from './pages/VaultBrowser'
 import KnowledgeBase from './pages/KnowledgeBase'
 import LoginPage from './pages/LoginPage'
-import RegisterPage from './pages/RegisterPage'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { useEffect } from 'react'
 import { useAuthStore } from './stores/authStore'
@@ -21,7 +20,6 @@ function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
           <Route index element={<Chat />} />
@@ -36,4 +34,3 @@ function App() {
 }
 
 export default App
-

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../stores/authStore'
 import { Mail, Lock, LogIn, Loader2 } from 'lucide-react'
 
@@ -117,27 +117,6 @@ export default function LoginPage() {
               )}
             </button>
           </form>
-
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-[var(--border-color)]" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-[var(--bg-card)] text-zinc-500">or</span>
-            </div>
-          </div>
-
-          {/* Register link */}
-          <p className="text-center text-zinc-400">
-            Don't have an account?{' '}
-            <Link
-              to="/register"
-              className="text-[#F0FF3D] hover:text-[#c8e600] transition-colors font-medium"
-            >
-              Create one
-            </Link>
-          </p>
         </div>
 
         {/* Footer */}

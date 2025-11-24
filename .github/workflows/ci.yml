@@ -86,6 +86,8 @@ jobs:
 
       - name: Build
         run: npm run build
+        env:
+          VITE_API_URL: https://api-dave.davidbuitrago.dev/api/v1
 
   build-and-push-images:
     runs-on: ubuntu-latest
@@ -133,3 +135,5 @@ jobs:
           push: true
           tags: ${{ steps.meta_frontend.outputs.tags }}
           labels: ${{ steps.meta_frontend.outputs.labels }}
+          build-args: |
+            VITE_API_URL=https://api-dave.davidbuitrago.dev/api/v1

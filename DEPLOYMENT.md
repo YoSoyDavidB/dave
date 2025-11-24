@@ -108,6 +108,50 @@ POST https://dave.davidbuitrago.dev/api/v1/auth/login
 
 ---
 
+## Frontend Configuration
+
+### Environment Variables
+
+Create a `.env` file in the `frontend/` directory for production:
+
+```bash
+# Production API URL (should point to your backend)
+VITE_API_URL=https://dave.davidbuitrago.dev/api/v1
+```
+
+**Important**: During the build process, Vite will embed this value into the JavaScript bundle. You need to set this environment variable **before building** the frontend for production.
+
+### Build for Production
+
+#### Option 1: Local Build (npm)
+
+```bash
+# Set the API URL for production
+cd frontend
+echo "VITE_API_URL=https://dave.davidbuitrago.dev/api/v1" > .env
+
+# Build the production bundle
+npm run build
+
+# The built files will be in frontend/dist/
+```
+
+#### Option 2: Docker Build
+
+```bash
+# Build the Docker image with production API URL
+cd frontend
+docker build --build-arg VITE_API_URL=https://dave.davidbuitrago.dev/api/v1 \
+  -t ghcr.io/YoSoyDavidB/dave-frontend:latest .
+
+# Push to registry (if using GitHub Container Registry)
+docker push ghcr.io/YoSoyDavidB/dave-frontend:latest
+```
+
+**Important**: The `VITE_API_URL` is embedded during build time, so you need to rebuild the frontend whenever you change the API URL.
+
+---
+
 ## Docker Deployment
 
 ### Docker Compose Setup
