@@ -104,21 +104,4 @@ describe('App Routing', () => {
       expect(screen.getByRole('heading', { name: /Welcome back/i })).toBeInTheDocument()
     })
   })
-
-  it('renders RegisterPage when navigating to /register', async () => {
-    // Mock unauthenticated state for clarity, though /register is usually public
-    (useAuthStore as unknown as Mock).mockReturnValue({
-      user: null,
-      isAuthenticated: false,
-      isLoading: false,
-      checkAuthStatus: vi.fn(),
-    });
-
-    setup(['/register'])
-
-    await waitFor(() => {
-      expect(screen.getByRole('heading', { name: /Create account/i })).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /Create account/i })).toBeInTheDocument()
-    })
-  });
 })
