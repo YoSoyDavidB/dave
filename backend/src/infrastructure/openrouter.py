@@ -43,9 +43,7 @@ class OpenRouterClient:
         }
 
         if tools:
-            payload["tools"] = [
-                {"type": "function", "function": tool} for tool in tools
-            ]
+            payload["tools"] = [{"type": "function", "function": tool} for tool in tools]
 
         return payload
 
@@ -145,11 +143,13 @@ class OpenRouterClient:
 
                                     # Ensure we have enough slots
                                     while len(accumulated_tool_calls) <= tc_index:
-                                        accumulated_tool_calls.append({
-                                            "id": "",
-                                            "type": "function",
-                                            "function": {"name": "", "arguments": ""},
-                                        })
+                                        accumulated_tool_calls.append(
+                                            {
+                                                "id": "",
+                                                "type": "function",
+                                                "function": {"name": "", "arguments": ""},
+                                            }
+                                        )
 
                                     tc = accumulated_tool_calls[tc_index]
 

@@ -55,9 +55,7 @@ async def get_recent_corrections(days: int = 7, limit: int = 20) -> list[English
         return []
 
 
-async def get_corrections_by_category(
-    category: str, limit: int = 20
-) -> list[EnglishCorrection]:
+async def get_corrections_by_category(category: str, limit: int = 20) -> list[EnglishCorrection]:
     """Get corrections by category."""
     try:
         async with async_session() as session:
@@ -78,23 +76,23 @@ async def get_error_stats() -> dict[str, Any]:
     try:
         async with async_session() as session:
             # Total corrections
-            total_result = await session.execute(
-                select(func.count(EnglishCorrection.id))
-            )
+            total_result = await session.execute(select(func.count(EnglishCorrection.id)))
             total = total_result.scalar() or 0
 
             # By category
             category_result = await session.execute(
-                select(EnglishCorrection.category, func.count(EnglishCorrection.id))
-                .group_by(EnglishCorrection.category)
+                select(EnglishCorrection.category, func.count(EnglishCorrection.id)).group_by(
+                    EnglishCorrection.category
+                )
             )
             by_category = {row[0]: row[1] for row in category_result.all()}
 
             # Last 7 days
             week_ago = datetime.utcnow() - timedelta(days=7)
             week_result = await session.execute(
-                select(func.count(EnglishCorrection.id))
-                .where(EnglishCorrection.created_at >= week_ago)
+                select(func.count(EnglishCorrection.id)).where(
+                    EnglishCorrection.created_at >= week_ago
+                )
             )
             last_week = week_result.scalar() or 0
 

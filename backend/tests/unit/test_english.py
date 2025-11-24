@@ -57,9 +57,9 @@ class TestGetCorrections:
 
     def test_get_corrections_success(self, client: TestClient, mock_user, mock_corrections):
         """Test getting recent corrections."""
-        with patch("src.api.routes.english.get_current_user") as mock_auth, \
-             patch("src.api.routes.english.get_recent_corrections") as mock_get:
-
+        with patch("src.api.routes.english.get_current_user") as mock_auth, patch(
+            "src.api.routes.english.get_recent_corrections"
+        ) as mock_get:
             mock_auth.return_value = mock_user
             mock_get.return_value = mock_corrections
 
@@ -74,18 +74,15 @@ class TestGetCorrections:
 
     def test_get_corrections_with_params(self, client: TestClient, mock_user, mock_corrections):
         """Test getting corrections with days and limit parameters."""
-        with patch("src.api.routes.english.get_current_user") as mock_auth, \
-             patch("src.api.routes.english.get_recent_corrections") as mock_get:
-
+        with patch("src.api.routes.english.get_current_user") as mock_auth, patch(
+            "src.api.routes.english.get_recent_corrections"
+        ) as mock_get:
             mock_auth.return_value = mock_user
             mock_get.return_value = mock_corrections
 
             client.cookies.set("access_token", "valid-token")
 
-            response = client.get(
-                "/api/v1/english/corrections",
-                params={"days": 30, "limit": 50}
-            )
+            response = client.get("/api/v1/english/corrections", params={"days": 30, "limit": 50})
 
             assert response.status_code in [200, 401]
 
@@ -100,9 +97,9 @@ class TestGetCorrectionsByCategory:
 
     def test_get_grammar_corrections(self, client: TestClient, mock_user, mock_corrections):
         """Test getting only grammar corrections."""
-        with patch("src.api.routes.english.get_current_user") as mock_auth, \
-             patch("src.api.routes.english.get_corrections_by_category") as mock_get:
-
+        with patch("src.api.routes.english.get_current_user") as mock_auth, patch(
+            "src.api.routes.english.get_corrections_by_category"
+        ) as mock_get:
             mock_auth.return_value = mock_user
             # Return only grammar corrections
             mock_get.return_value = [c for c in mock_corrections if c.category == "grammar"]
@@ -126,18 +123,13 @@ class TestGetStats:
         """Test getting learning statistics."""
         mock_stats = {
             "total_corrections": 42,
-            "by_category": {
-                "grammar": 18,
-                "vocabulary": 12,
-                "expression": 8,
-                "spelling": 4
-            },
-            "last_7_days": 5
+            "by_category": {"grammar": 18, "vocabulary": 12, "expression": 8, "spelling": 4},
+            "last_7_days": 5,
         }
 
-        with patch("src.api.routes.english.get_current_user") as mock_auth, \
-             patch("src.api.routes.english.get_error_stats") as mock_get:
-
+        with patch("src.api.routes.english.get_current_user") as mock_auth, patch(
+            "src.api.routes.english.get_error_stats"
+        ) as mock_get:
             mock_auth.return_value = mock_user
             mock_get.return_value = mock_stats
 
@@ -149,15 +141,11 @@ class TestGetStats:
 
     def test_get_stats_empty(self, client: TestClient, mock_user):
         """Test stats when no corrections exist."""
-        mock_stats = {
-            "total_corrections": 0,
-            "by_category": {},
-            "last_7_days": 0
-        }
+        mock_stats = {"total_corrections": 0, "by_category": {}, "last_7_days": 0}
 
-        with patch("src.api.routes.english.get_current_user") as mock_auth, \
-             patch("src.api.routes.english.get_error_stats") as mock_get:
-
+        with patch("src.api.routes.english.get_current_user") as mock_auth, patch(
+            "src.api.routes.english.get_error_stats"
+        ) as mock_get:
             mock_auth.return_value = mock_user
             mock_get.return_value = mock_stats
 
@@ -189,9 +177,9 @@ class TestEnglishService:
                 corrected_text="I am 30 years old",
                 explanation="Use 'to be' for age",
                 category="grammar",
-                subcategory="age_expression"
+                subcategory="age_expression",
             )
 
             # Will return None due to mocking complexity
             # In real tests, use test database
-            assert result is None or hasattr(result, 'id')
+            assert result is None or hasattr(result, "id")

@@ -60,7 +60,11 @@ def create_app() -> FastAPI:
     if not settings.debug:
         app.add_middleware(
             TrustedHostMiddleware,
-            allowed_hosts=["dave.davidbuitrago.dev", "www.dave.davidbuitrago.dev"],
+            allowed_hosts=[
+                "dave.davidbuitrago.dev",
+                "www.dave.davidbuitrago.dev",
+                "testserver",  # For TestClient in tests
+            ],
         )
 
     # CORS middleware

@@ -67,10 +67,10 @@ def chunk_by_tokens(
         if end < len(text):
             # Look for sentence boundaries near the end
             search_start = max(start + char_chunk_size - 200, start)
-            chunk_text = text[search_start:end + 100]
+            chunk_text = text[search_start : end + 100]
 
             # Find last sentence boundary
-            boundaries = list(re.finditer(r'[.!?]\s+', chunk_text))
+            boundaries = list(re.finditer(r"[.!?]\s+", chunk_text))
             if boundaries:
                 # Use the last boundary found
                 last_boundary = boundaries[-1]
@@ -123,7 +123,7 @@ def chunk_markdown(
     # char_chunk_size = chunk_size * CHARS_PER_TOKEN
 
     # Split by headings first
-    heading_pattern = r'^(#{1,6}\s+.+)$'
+    heading_pattern = r"^(#{1,6}\s+.+)$"
     sections = re.split(heading_pattern, text, flags=re.MULTILINE)
 
     current_heading = ""
@@ -138,7 +138,7 @@ def chunk_markdown(
             continue
 
         # Check if this is a heading
-        if re.match(r'^#{1,6}\s+', section):
+        if re.match(r"^#{1,6}\s+", section):
             current_heading = section.strip()
 
             # If buffer is large enough, yield it
@@ -226,7 +226,7 @@ def chunk_document(
         List of DocumentChunk objects
     """
     # Use markdown chunking for .md files
-    if path.endswith('.md'):
+    if path.endswith(".md"):
         chunks = list(chunk_markdown(content, chunk_size, chunk_overlap))
     else:
         chunks = list(chunk_by_tokens(content, chunk_size, chunk_overlap))

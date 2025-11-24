@@ -75,10 +75,7 @@ async def create_file(request: FileCreate) -> dict[str, str]:
         # Check if file already exists
         existing = await client.get_file(request.path)
         if existing is not None:
-            raise HTTPException(
-                status_code=409,
-                detail=f"File already exists: {request.path}"
-            )
+            raise HTTPException(status_code=409, detail=f"File already exists: {request.path}")
 
         await client.create_file(
             path=request.path,
@@ -150,10 +147,7 @@ async def get_daily_note() -> FileContent | None:
         result = await client.get_file(path)
 
         if result is None:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Daily note not found: {path}"
-            )
+            raise HTTPException(status_code=404, detail=f"Daily note not found: {path}")
 
         return FileContent(**result)
 

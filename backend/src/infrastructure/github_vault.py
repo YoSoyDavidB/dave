@@ -146,12 +146,14 @@ class GitHubVaultClient:
                     # Return path relative to vault prefix, not the full GitHub path
                     relative_path = item["path"]
                     if self.vault_prefix and relative_path.startswith(self.vault_prefix + "/"):
-                        relative_path = relative_path[len(self.vault_prefix) + 1:]
-                    items.append({
-                        "name": item["name"],
-                        "path": relative_path,
-                        "type": item["type"],
-                    })
+                        relative_path = relative_path[len(self.vault_prefix) + 1 :]
+                    items.append(
+                        {
+                            "name": item["name"],
+                            "path": relative_path,
+                            "type": item["type"],
+                        }
+                    )
 
             logger.info("vault_directory_listed", path=path, count=len(items))
             return items
@@ -176,11 +178,13 @@ class GitHubVaultClient:
                 # Return path relative to vault prefix
                 relative_path = item["path"]
                 if self.vault_prefix and relative_path.startswith(self.vault_prefix + "/"):
-                    relative_path = relative_path[len(self.vault_prefix) + 1:]
-                results.append({
-                    "name": item["name"],
-                    "path": relative_path,
-                })
+                    relative_path = relative_path[len(self.vault_prefix) + 1 :]
+                results.append(
+                    {
+                        "name": item["name"],
+                        "path": relative_path,
+                    }
+                )
 
             logger.info("vault_search", query=query, results=len(results))
             return results
@@ -192,13 +196,21 @@ class GitHubVaultClient:
 
         # Format: Timestamps/YYYY/MM-Month/YYYY-MM-DD Day.md
         month_names = [
-            "", "January", "February", "March", "April", "May", "June",
-            "July", "August", "September", "October", "November", "December"
+            "",
+            "January",
+            "February",
+            "March",
+            "April",
+            "May",
+            "June",
+            "July",
+            "August",
+            "September",
+            "October",
+            "November",
+            "December",
         ]
-        day_names = [
-            "Monday", "Tuesday", "Wednesday", "Thursday",
-            "Friday", "Saturday", "Sunday"
-        ]
+        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
         year = date.strftime("%Y")
         month_num = date.strftime("%m")

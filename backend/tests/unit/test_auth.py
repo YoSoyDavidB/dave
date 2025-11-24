@@ -5,6 +5,9 @@ from fastapi.testclient import TestClient
 
 from src.main import app
 
+# Test registration secret
+TEST_REGISTRATION_SECRET = "test-registration-secret-123"
+
 
 @pytest.fixture
 def client() -> TestClient:
@@ -18,18 +21,28 @@ def mock_user():
     user.id = "test-user-id-123"
     user.email = "test@example.com"
     user.hashed_password = (
-        "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.O3tcQsgeQZS4Oi"
-    )  # "testpass123"
+        "$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.O3tcQsgeQZS4Oi"  # "testpass123"
+    )
     user.is_active = True
     user.created_at = "2025-01-01T00:00:00"
     user.updated_at = "2025-01-01T00:00:00"
     return user
 
 
+@pytest.fixture
+def mock_settings():
+    """Mock settings with test registration secret."""
+    from src.config import Settings
+
+    settings = Settings()
+    settings.registration_secret = TEST_REGISTRATION_SECRET
+    return settings
+
+
 class TestRegister:
     """Tests for user registration endpoint."""
 
-    def test_register_success(self, client: TestClient):
+    def test_register_success(self, client: TestClient, mock_settings):
         """Test successful user registration."""
         from src.infrastructure.database import get_db
         from src.main import app
@@ -55,10 +68,12 @@ class TestRegister:
         app.dependency_overrides[get_db] = override_get_db
 
         try:
-            with patch("src.api.routes.auth.get_user_by_email", side_effect=mock_get_user):
+            with patch("src.api.routes.auth.get_user_by_email", side_effect=mock_get_user), patch(
+                "src.api.routes.auth.settings", mock_settings
+            ):
                 response = client.post(
-                    "/api/v1/auth/register",
-                    json={"email": "newuser@example.com", "password": "securepass123"}
+                    f"/api/v1/auth/register-secret-7x9k2m4n?registration_token={TEST_REGISTRATION_SECRET}",
+                    json={"email": "newuser@example.com", "password": "securepass123"},
                 )
 
                 # Should succeed with mocked DB
@@ -68,36 +83,71 @@ class TestRegister:
         finally:
             app.dependency_overrides.clear()
 
-    def test_register_existing_email(self, client: TestClient, mock_user):
+    def test_register_missing_token(self, client: TestClient):
+        """Test registration without registration token."""
+        response = client.post(
+            "/api/v1/auth/register-secret-7x9k2m4n",
+            json={"email": "newuser@example.com", "password": "securepass123"},
+        )
+
+        assert response.status_code == 403
+        assert "Invalid or missing registration token" in response.json()["detail"]
+
+    def test_register_invalid_token(self, client: TestClient, mock_settings):
+        """Test registration with invalid registration token."""
+        with patch("src.api.routes.auth.settings", mock_settings):
+            response = client.post(
+                "/api/v1/auth/register-secret-7x9k2m4n?registration_token=wrong-token",
+                json={"email": "newuser@example.com", "password": "securepass123"},
+            )
+
+            assert response.status_code == 403
+            assert "Invalid or missing registration token" in response.json()["detail"]
+
+    def test_register_existing_email(self, client: TestClient, mock_user, mock_settings):
         """Test registration with an already registered email."""
-        with patch("src.api.routes.auth.get_user_by_email") as mock_get_user:
+        with patch("src.api.routes.auth.get_user_by_email") as mock_get_user, patch(
+            "src.api.routes.auth.settings", mock_settings
+        ):
             mock_get_user.return_value = mock_user  # User already exists
 
             response = client.post(
-                "/api/v1/auth/register",
-                json={"email": "test@example.com", "password": "testpass123"}
+                f"/api/v1/auth/register-secret-7x9k2m4n?registration_token={TEST_REGISTRATION_SECRET}",
+                json={"email": "test@example.com", "password": "testpass123"},
             )
 
             # This will likely return 500 due to DB issues, but the logic is correct
             assert response.status_code in [400, 500]
 
-    def test_register_invalid_email(self, client: TestClient):
+    def test_register_invalid_email(self, client: TestClient, mock_settings):
         """Test registration with invalid email format."""
-        response = client.post(
-            "/api/v1/auth/register",
-            json={"email": "notanemail", "password": "testpass123"}
-        )
+        with patch("src.api.routes.auth.settings", mock_settings):
+            response = client.post(
+                f"/api/v1/auth/register-secret-7x9k2m4n?registration_token={TEST_REGISTRATION_SECRET}",
+                json={"email": "notanemail", "password": "testpass123"},
+            )
 
-        assert response.status_code == 422  # Validation error
+            # Pydantic validates email first, so returns 422
+            assert response.status_code == 422
+
+    def test_register_short_password(self, client: TestClient, mock_settings):
+        """Test registration with password too short."""
+        with patch("src.api.routes.auth.settings", mock_settings):
+            response = client.post(
+                f"/api/v1/auth/register-secret-7x9k2m4n?registration_token={TEST_REGISTRATION_SECRET}",
+                json={"email": "test@example.com", "password": "short"},
+            )
+
+            # Pydantic passes, but our custom validation catches it
+            assert response.status_code == 422
 
     def test_register_missing_password(self, client: TestClient):
         """Test registration without password."""
         response = client.post(
-            "/api/v1/auth/register",
-            json={"email": "test@example.com"}
+            "/api/v1/auth/register-secret-7x9k2m4n", json={"email": "test@example.com"}
         )
 
-        assert response.status_code == 422  # Validation error
+        assert response.status_code == 422  # Pydantic validation error
 
 
 class TestLogin:
@@ -105,15 +155,14 @@ class TestLogin:
 
     def test_login_success(self, client: TestClient, mock_user):
         """Test successful login."""
-        with patch("src.api.routes.auth.get_user_by_email") as mock_get_user, \
-             patch("src.api.routes.auth.verify_password") as mock_verify:
-
+        with patch("src.api.routes.auth.get_user_by_email") as mock_get_user, patch(
+            "src.api.routes.auth.verify_password"
+        ) as mock_verify:
             mock_get_user.return_value = mock_user
             mock_verify.return_value = True
 
             response = client.post(
-                "/api/v1/auth/login",
-                json={"email": "test@example.com", "password": "testpass123"}
+                "/api/v1/auth/login", json={"email": "test@example.com", "password": "testpass123"}
             )
 
             # Check for success or DB-related error
@@ -124,15 +173,15 @@ class TestLogin:
 
     def test_login_wrong_password(self, client: TestClient, mock_user):
         """Test login with incorrect password."""
-        with patch("src.api.routes.auth.get_user_by_email") as mock_get_user, \
-             patch("src.api.routes.auth.verify_password") as mock_verify:
-
+        with patch("src.api.routes.auth.get_user_by_email") as mock_get_user, patch(
+            "src.api.routes.auth.verify_password"
+        ) as mock_verify:
             mock_get_user.return_value = mock_user
             mock_verify.return_value = False  # Wrong password
 
             response = client.post(
                 "/api/v1/auth/login",
-                json={"email": "test@example.com", "password": "wrongpassword"}
+                json={"email": "test@example.com", "password": "wrongpassword"},
             )
 
             # Should be 401 if mock works correctly
@@ -145,17 +194,14 @@ class TestLogin:
 
             response = client.post(
                 "/api/v1/auth/login",
-                json={"email": "nonexistent@example.com", "password": "testpass123"}
+                json={"email": "nonexistent@example.com", "password": "testpass123"},
             )
 
             assert response.status_code in [401, 500]
 
     def test_login_missing_email(self, client: TestClient):
         """Test login without email."""
-        response = client.post(
-            "/api/v1/auth/login",
-            json={"password": "testpass123"}
-        )
+        response = client.post("/api/v1/auth/login", json={"password": "testpass123"})
 
         assert response.status_code == 422  # Validation error
 

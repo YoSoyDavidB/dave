@@ -282,8 +282,7 @@ class DocumentRepository:
         )
 
         chunks = [
-            IndexedDocument.from_payload(str(point.id), point.payload or {})
-            for point in results
+            IndexedDocument.from_payload(str(point.id), point.payload or {}) for point in results
         ]
 
         # Sort by chunk index

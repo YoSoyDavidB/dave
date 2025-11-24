@@ -22,5 +22,4 @@ class UserResponse(UserBase):
     updated_at: datetime
 
     class Config:
-        from_attributes = True # Or orm_mode = True for Pydantic V1
-
+        from_attributes = True  # Or orm_mode = True for Pydantic V1

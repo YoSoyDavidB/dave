@@ -26,11 +26,7 @@ class DetailedHealthResponse(BaseModel):
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """Basic health check endpoint."""
-    return HealthResponse(
-        status="healthy",
-        timestamp=datetime.utcnow(),
-        version="0.1.0"
-    )
+    return HealthResponse(status="healthy", timestamp=datetime.utcnow(), version="0.1.0")
 
 
 @router.get("/health/detailed", response_model=DetailedHealthResponse)
@@ -49,5 +45,5 @@ async def detailed_health_check() -> DetailedHealthResponse:
             "qdrant": {"status": "not_configured"},
             "neo4j": {"status": "not_configured"},
             "redis": {"status": "not_configured"},
-        }
+        },
     )

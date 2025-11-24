@@ -23,23 +23,27 @@ router = APIRouter(tags=["conversations"])
 
 class MessageSchema(BaseModel):
     """Schema for a message."""
+
     role: str
     content: str
 
 
 class ConversationCreate(BaseModel):
     """Schema for creating a conversation."""
+
     title: str | None = None
     messages: list[MessageSchema] | None = None
 
 
 class ConversationUpdate(BaseModel):
     """Schema for updating a conversation."""
+
     title: str
 
 
 class ConversationResponse(BaseModel):
     """Schema for conversation response."""
+
     id: str
     title: str | None
     created_at: str
@@ -49,6 +53,7 @@ class ConversationResponse(BaseModel):
 
 class ConversationListItem(BaseModel):
     """Schema for conversation list item."""
+
     id: str
     title: str
     updated_at: str
@@ -56,6 +61,7 @@ class ConversationListItem(BaseModel):
 
 class GroupedConversationsResponse(BaseModel):
     """Schema for grouped conversations response."""
+
     groups: dict[str, list[ConversationListItem]]
 
 
@@ -77,12 +83,14 @@ async def create_new_conversation(request: ConversationCreate) -> ConversationRe
                 content=msg.content,
             )
             if message:
-                messages_data.append({
-                    "id": message.id,
-                    "role": message.role,
-                    "content": message.content,
-                    "created_at": message.created_at.isoformat(),
-                })
+                messages_data.append(
+                    {
+                        "id": message.id,
+                        "role": message.role,
+                        "content": message.content,
+                        "created_at": message.created_at.isoformat(),
+                    }
+                )
 
         # Auto-generate title from first user message if not provided
         if not request.title and request.messages:
@@ -109,8 +117,7 @@ async def list_conversations() -> GroupedConversationsResponse:
     raw_groups = await get_conversations_grouped()
     # Convert dict items to ConversationListItem
     groups = {
-        key: [ConversationListItem(**item) for item in items]
-        for key, items in raw_groups.items()
+        key: [ConversationListItem(**item) for item in items] for key, items in raw_groups.items()
     }
     return GroupedConversationsResponse(groups=groups)
 

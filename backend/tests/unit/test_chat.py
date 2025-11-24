@@ -26,9 +26,7 @@ def test_chat_endpoint_success(client: TestClient) -> None:
         "usage": {"prompt_tokens": 10, "completion_tokens": 8, "total_tokens": 18},
     }
 
-    with patch(
-        "src.api.routes.chat.get_openrouter_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.chat.get_openrouter_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.chat.return_value = mock_response
         mock_get_client.return_value = mock_client
@@ -60,9 +58,7 @@ def test_chat_endpoint_with_history(client: TestClient) -> None:
         "usage": {"prompt_tokens": 20, "completion_tokens": 5, "total_tokens": 25},
     }
 
-    with patch(
-        "src.api.routes.chat.get_openrouter_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.chat.get_openrouter_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.chat.return_value = mock_response
         mock_get_client.return_value = mock_client
@@ -85,9 +81,7 @@ def test_chat_endpoint_with_history(client: TestClient) -> None:
 
 def test_chat_endpoint_error(client: TestClient) -> None:
     """Test chat error handling."""
-    with patch(
-        "src.api.routes.chat.get_openrouter_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.chat.get_openrouter_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.chat.side_effect = Exception("API error")
         mock_get_client.return_value = mock_client

@@ -92,12 +92,7 @@ class DocumentSearchResponse(BaseModel):
 @router.get("/categories/list")
 async def list_categories() -> dict[str, Any]:
     """List available document categories."""
-    return {
-        "categories": [
-            {"value": c.value, "label": c.value.title()}
-            for c in DocumentCategory
-        ]
-    }
+    return {"categories": [{"value": c.value, "label": c.value.title()} for c in DocumentCategory]}
 
 
 async def extract_text_content(file: UploadFile, content_type: str) -> str:
@@ -136,15 +131,11 @@ async def extract_text_content(file: UploadFile, content_type: str) -> str:
         except Exception as e:
             logger.error("pdf_extraction_failed", error=str(e))
             raise HTTPException(
-                status_code=400,
-                detail=f"Failed to extract text from PDF: {str(e)}"
+                status_code=400, detail=f"Failed to extract text from PDF: {str(e)}"
             )
 
     else:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported file type: {content_type}"
-        )
+        raise HTTPException(status_code=400, detail=f"Unsupported file type: {content_type}")
 
 
 @router.post("/upload", response_model=DocumentResponse)
@@ -178,7 +169,7 @@ async def upload_document(
     except ValueError:
         raise HTTPException(
             status_code=400,
-            detail=f"Invalid category: {category}. Valid: {[c.value for c in DocumentCategory]}"
+            detail=f"Invalid category: {category}. Valid: {[c.value for c in DocumentCategory]}",
         )
 
     # Read file content
@@ -187,8 +178,7 @@ async def upload_document(
 
     if file_size > MAX_FILE_SIZE:
         raise HTTPException(
-            status_code=400,
-            detail=f"File too large. Maximum size: {MAX_FILE_SIZE / 1024 / 1024}MB"
+            status_code=400, detail=f"File too large. Maximum size: {MAX_FILE_SIZE / 1024 / 1024}MB"
         )
 
     # Reset file position for extraction
@@ -200,7 +190,7 @@ async def upload_document(
     if not text_content.strip():
         raise HTTPException(
             status_code=400,
-            detail="Could not extract text from file. File may be empty or corrupted."
+            detail="Could not extract text from file. File may be empty or corrupted.",
         )
 
     # Parse tags
@@ -211,6 +201,7 @@ async def upload_document(
 
     # Generate stored filename
     import uuid
+
     stored_filename = f"{uuid.uuid4()}{_get_extension(file.filename or 'file')}"
 
     doc = await repo.create_document(

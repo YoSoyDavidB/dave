@@ -103,7 +103,7 @@ class EmbeddingService:
 
         # Truncate if too long
         if len(text) > MAX_INPUT_LENGTH * 4:  # Rough char estimate
-            text = text[:MAX_INPUT_LENGTH * 4]
+            text = text[: MAX_INPUT_LENGTH * 4]
             logger.warning("text_truncated_for_embedding", original_length=len(text))
 
         # Check cache
@@ -190,12 +190,12 @@ class EmbeddingService:
         client = await self._get_client()
 
         for batch_start in range(0, len(texts_to_embed), batch_size):
-            batch = texts_to_embed[batch_start:batch_start + batch_size]
+            batch = texts_to_embed[batch_start : batch_start + batch_size]
             batch_texts = [t[1] for t in batch]
 
             # Truncate texts if needed
             batch_texts = [
-                t[:MAX_INPUT_LENGTH * 4] if len(t) > MAX_INPUT_LENGTH * 4 else t
+                t[: MAX_INPUT_LENGTH * 4] if len(t) > MAX_INPUT_LENGTH * 4 else t
                 for t in batch_texts
             ]
 

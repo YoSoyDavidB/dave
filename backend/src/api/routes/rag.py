@@ -57,6 +57,7 @@ async def full_index(background_tasks: BackgroundTasks) -> IndexResponse:
 
     This runs in the background and may take a while for large vaults.
     """
+
     async def run_full_sync():
         try:
             indexer = get_vault_indexing_use_case()
@@ -79,6 +80,7 @@ async def incremental_index(background_tasks: BackgroundTasks) -> IndexResponse:
 
     Only indexes files that have changed since last sync.
     """
+
     async def run_incremental_sync():
         try:
             indexer = get_vault_indexing_use_case()
@@ -153,20 +155,24 @@ async def search(request: SearchRequest) -> SearchResponse:
         search_results = []
 
         for memory in result.memories:
-            search_results.append(SearchResult(
-                content=memory.short_text,
-                source=memory.source,
-                source_type="memory",
-                score=memory.relevance_score,
-            ))
+            search_results.append(
+                SearchResult(
+                    content=memory.short_text,
+                    source=memory.source,
+                    source_type="memory",
+                    score=memory.relevance_score,
+                )
+            )
 
         for doc in result.documents:
-            search_results.append(SearchResult(
-                content=doc.content[:500] + "..." if len(doc.content) > 500 else doc.content,
-                source=doc.path,
-                source_type="document",
-                score=doc.score,
-            ))
+            search_results.append(
+                SearchResult(
+                    content=doc.content[:500] + "..." if len(doc.content) > 500 else doc.content,
+                    source=doc.path,
+                    source_type="document",
+                    score=doc.score,
+                )
+            )
 
         return SearchResponse(
             results=search_results,
@@ -182,6 +188,7 @@ async def search(request: SearchRequest) -> SearchResponse:
 # ============================================
 # MEMORY ENDPOINTS
 # ============================================
+
 
 class MemoryResponse(BaseModel):
     """A memory item."""

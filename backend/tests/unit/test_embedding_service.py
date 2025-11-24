@@ -22,11 +22,7 @@ def embedding_service():
 @pytest.fixture
 def mock_response():
     """Create a mock embedding API response."""
-    return {
-        "data": [
-            {"embedding": [0.1] * VECTOR_SIZE}
-        ]
-    }
+    return {"data": [{"embedding": [0.1] * VECTOR_SIZE}]}
 
 
 class TestEmbeddingCache:

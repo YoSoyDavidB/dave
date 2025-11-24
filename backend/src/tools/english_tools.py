@@ -17,31 +17,27 @@ ENGLISH_TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "original_text": {
                     "type": "string",
-                    "description": "The original text with the error"
+                    "description": "The original text with the error",
                 },
-                "corrected_text": {
-                    "type": "string",
-                    "description": "The corrected version"
-                },
+                "corrected_text": {"type": "string", "description": "The corrected version"},
                 "explanation": {
                     "type": "string",
-                    "description": "Brief explanation of why it was wrong and the rule"
+                    "description": "Brief explanation of why it was wrong and the rule",
                 },
                 "category": {
                     "type": "string",
                     "enum": ["grammar", "vocabulary", "spelling", "expression"],
-                    "description": "Category of the error"
+                    "description": "Category of the error",
                 },
                 "subcategory": {
                     "type": "string",
                     "description": (
-                        "More specific type "
-                        "(e.g., 'verb_tense', 'articles', 'prepositions')"
-                    )
-                }
+                        "More specific type " "(e.g., 'verb_tense', 'articles', 'prepositions')"
+                    ),
+                },
             },
-            "required": ["original_text", "corrected_text", "explanation", "category"]
-        }
+            "required": ["original_text", "corrected_text", "explanation", "category"],
+        },
     },
     {
         "name": "get_english_progress",
@@ -49,11 +45,7 @@ ENGLISH_TOOLS: list[dict[str, Any]] = [
             "Get the user's English learning progress and error statistics. "
             "Use when they ask about their progress or common mistakes."
         ),
-        "input_schema": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        }
+        "input_schema": {"type": "object", "properties": {}, "required": []},
     },
     {
         "name": "get_recent_english_errors",
@@ -66,12 +58,12 @@ ENGLISH_TOOLS: list[dict[str, Any]] = [
             "properties": {
                 "days": {
                     "type": "integer",
-                    "description": "Number of days to look back (default: 7)"
+                    "description": "Number of days to look back (default: 7)",
                 }
             },
-            "required": []
-        }
-    }
+            "required": [],
+        },
+    },
 ]
 
 

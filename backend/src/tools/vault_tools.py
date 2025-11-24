@@ -13,8 +13,19 @@ DAILY_NOTE_TEMPLATE_PATH = "Extras/Templates/Template, Daily log.md"
 def _process_templater_syntax(template: str, date: datetime) -> str:
     """Process Templater syntax in a template string."""
     month_names = [
-        "", "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December"
+        "",
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
     ]
     day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 
@@ -25,17 +36,13 @@ def _process_templater_syntax(template: str, date: datetime) -> str:
     result = template
 
     # Replace tp.file.creation_date()
-    result = re.sub(
-        r'<%\s*tp\.file\.creation_date\(\)\s*%>',
-        date.strftime("%Y-%m-%d"),
-        result
-    )
+    result = re.sub(r"<%\s*tp\.file\.creation_date\(\)\s*%>", date.strftime("%Y-%m-%d"), result)
 
     # Replace moment formatting for title
     result = re.sub(
         r'<%\s*moment\(tp\.file\.title,[\'"]YYYY-MM-DD[\'"]\)\.format\([\'"]dddd, MMMM DD, YYYY[\'"]\)\s*%>',
         f"{day_names[date.weekday()]}, {month_names[date.month]} {date.day:02d}, {date.year}",
-        result
+        result,
     )
 
     # Replace tp.date.now patterns for yesterday (offset -1)
@@ -50,9 +57,7 @@ def _process_templater_syntax(template: str, date: datetime) -> str:
         return match.group(0)
 
     result = re.sub(
-        r'<%\s*tp\.date\.now\([\'"]([^"\']+)[\'"],\s*-1\)\s*%>',
-        replace_yesterday,
-        result
+        r'<%\s*tp\.date\.now\([\'"]([^"\']+)[\'"],\s*-1\)\s*%>', replace_yesterday, result
     )
 
     # Replace tp.date.now patterns for tomorrow (offset 1)
@@ -67,16 +72,12 @@ def _process_templater_syntax(template: str, date: datetime) -> str:
         return match.group(0)
 
     result = re.sub(
-        r'<%\s*tp\.date\.now\([\'"]([^"\']+)[\'"],\s*1\)\s*%>',
-        replace_tomorrow,
-        result
+        r'<%\s*tp\.date\.now\([\'"]([^"\']+)[\'"],\s*1\)\s*%>', replace_tomorrow, result
     )
 
     # Replace tp.date.now for current date (no offset)
     result = re.sub(
-        r'<%\s*tp\.date\.now\([\'"]YYYY-MM-DD[\'"]\)\s*%>',
-        date.strftime("%Y-%m-%d"),
-        result
+        r'<%\s*tp\.date\.now\([\'"]YYYY-MM-DD[\'"]\)\s*%>', date.strftime("%Y-%m-%d"), result
     )
 
     return result
@@ -88,6 +89,7 @@ async def _get_daily_note_template(client: Any) -> str | None:
     if template_file is None:
         return None
     return str(template_file["content"])
+
 
 # Tool definitions for OpenRouter/Claude
 VAULT_TOOLS: list[dict[str, Any]] = [
@@ -105,11 +107,11 @@ VAULT_TOOLS: list[dict[str, Any]] = [
                     "description": (
                         "Path to the note relative to vault root. "
                         "Examples: 'Inbox/quick-note.md', 'Area/Terapia/autoregistro.md'"
-                    )
+                    ),
                 }
             },
-            "required": ["path"]
-        }
+            "required": ["path"],
+        },
     },
     {
         "name": "read_daily_note",
@@ -117,11 +119,7 @@ VAULT_TOOLS: list[dict[str, Any]] = [
             "Read today's daily note from the vault. "
             "Use this when the user asks about their day, tasks, or daily activities."
         ),
-        "input_schema": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        }
+        "input_schema": {"type": "object", "properties": {}, "required": []},
     },
     {
         "name": "create_note",
@@ -137,15 +135,15 @@ VAULT_TOOLS: list[dict[str, Any]] = [
                     "description": (
                         "Path for the new note. "
                         "Examples: 'Inbox/meeting-notes.md', 'Project/Personal/idea.md'"
-                    )
+                    ),
                 },
                 "content": {
                     "type": "string",
-                    "description": "Markdown content for the note. Include frontmatter if needed."
-                }
+                    "description": "Markdown content for the note. Include frontmatter if needed.",
+                },
             },
-            "required": ["path", "content"]
-        }
+            "required": ["path", "content"],
+        },
     },
     {
         "name": "list_directory",
@@ -159,13 +157,12 @@ VAULT_TOOLS: list[dict[str, Any]] = [
                 "path": {
                     "type": "string",
                     "description": (
-                        "Directory path. Use '' for root. "
-                        "Examples: 'Inbox', 'Project/Personal'"
-                    )
+                        "Directory path. Use '' for root. " "Examples: 'Inbox', 'Project/Personal'"
+                    ),
                 }
             },
-            "required": []
-        }
+            "required": [],
+        },
     },
     {
         "name": "search_vault",
@@ -176,13 +173,10 @@ VAULT_TOOLS: list[dict[str, Any]] = [
         "input_schema": {
             "type": "object",
             "properties": {
-                "query": {
-                    "type": "string",
-                    "description": "Search query to find relevant notes"
-                }
+                "query": {"type": "string", "description": "Search query to find relevant notes"}
             },
-            "required": ["query"]
-        }
+            "required": ["query"],
+        },
     },
     {
         "name": "append_to_daily_note",
@@ -199,15 +193,12 @@ VAULT_TOOLS: list[dict[str, Any]] = [
                     "description": (
                         "Section to append to: "
                         "'quick_capture', 'notes', 'tasks', 'gastos', 'english'"
-                    )
+                    ),
                 },
-                "content": {
-                    "type": "string",
-                    "description": "Content to add to the section"
-                }
+                "content": {"type": "string", "description": "Content to add to the section"},
             },
-            "required": ["section", "content"]
-        }
+            "required": ["section", "content"],
+        },
     },
     {
         "name": "create_daily_note",
@@ -216,12 +207,8 @@ VAULT_TOOLS: list[dict[str, Any]] = [
             "Use this when the user wants to add something to their daily note "
             "but it doesn't exist yet."
         ),
-        "input_schema": {
-            "type": "object",
-            "properties": {},
-            "required": []
-        }
-    }
+        "input_schema": {"type": "object", "properties": {}, "required": []},
+    },
 ]
 
 
@@ -283,9 +270,30 @@ async def execute_tool(tool_name: str, tool_input: dict[str, Any]) -> str:
                 processed_content = _process_templater_syntax(template_content, today)
             else:
                 # Fallback to basic template if vault template not found
-                day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-                month_names = ["", "January", "February", "March", "April", "May", "June",
-                              "July", "August", "September", "October", "November", "December"]
+                day_names = [
+                    "Monday",
+                    "Tuesday",
+                    "Wednesday",
+                    "Thursday",
+                    "Friday",
+                    "Saturday",
+                    "Sunday",
+                ]
+                month_names = [
+                    "",
+                    "January",
+                    "February",
+                    "March",
+                    "April",
+                    "May",
+                    "June",
+                    "July",
+                    "August",
+                    "September",
+                    "October",
+                    "November",
+                    "December",
+                ]
                 processed_content = f"""---
 created: {today.strftime("%Y-%m-%d")}
 tags:
@@ -372,9 +380,30 @@ tags:
             processed_content = _process_templater_syntax(template_content, today)
         else:
             # Fallback to basic template if vault template not found
-            day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-            month_names = ["", "January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"]
+            day_names = [
+                "Monday",
+                "Tuesday",
+                "Wednesday",
+                "Thursday",
+                "Friday",
+                "Saturday",
+                "Sunday",
+            ]
+            month_names = [
+                "",
+                "January",
+                "February",
+                "March",
+                "April",
+                "May",
+                "June",
+                "July",
+                "August",
+                "September",
+                "October",
+                "November",
+                "December",
+            ]
             processed_content = f"""---
 created: {today.strftime("%Y-%m-%d")}
 tags:

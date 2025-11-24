@@ -49,9 +49,7 @@ async def get_recent_conversations(limit: int = 20) -> list[Conversation]:
     try:
         async with async_session() as session:
             result = await session.execute(
-                select(Conversation)
-                .order_by(Conversation.updated_at.desc())
-                .limit(limit)
+                select(Conversation).order_by(Conversation.updated_at.desc()).limit(limit)
             )
             return list(result.scalars().all())
     except Exception as e:
@@ -64,9 +62,7 @@ async def get_conversations_grouped() -> dict[str, list[dict[str, Any]]]:
     try:
         async with async_session() as session:
             result = await session.execute(
-                select(Conversation)
-                .order_by(Conversation.updated_at.desc())
-                .limit(50)
+                select(Conversation).order_by(Conversation.updated_at.desc()).limit(50)
             )
             conversations = list(result.scalars().all())
 

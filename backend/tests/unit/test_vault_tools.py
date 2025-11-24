@@ -24,9 +24,7 @@ class TestTemplaterProcessing:
 
     def test_process_moment_format(self):
         """Test processing moment formatting for title."""
-        template = (
-            '# <% moment(tp.file.title,"YYYY-MM-DD").format("dddd, MMMM DD, YYYY") %>'
-        )
+        template = '# <% moment(tp.file.title,"YYYY-MM-DD").format("dddd, MMMM DD, YYYY") %>'
         date = datetime(2025, 11, 23)  # Sunday
 
         result = _process_templater_syntax(template, date)
@@ -131,9 +129,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_read_note_success(self):
         """Test reading a note successfully."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_file.return_value = {
                 "content": "# Test Note\nContent here",
@@ -148,9 +144,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_read_note_not_found(self):
         """Test reading a non-existent note."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_file.return_value = None
             mock_get.return_value = mock_client
@@ -162,44 +156,44 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_create_note_success(self):
         """Test creating a new note."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_file.return_value = None  # Doesn't exist
             mock_client.create_file.return_value = {"content": {"sha": "new123"}}
             mock_get.return_value = mock_client
 
-            result = await execute_tool("create_note", {
-                "path": "Inbox/new-note.md",
-                "content": "# New Note",
-            })
+            result = await execute_tool(
+                "create_note",
+                {
+                    "path": "Inbox/new-note.md",
+                    "content": "# New Note",
+                },
+            )
 
             assert "created" in result.lower()
 
     @pytest.mark.asyncio
     async def test_create_note_already_exists(self):
         """Test creating a note that already exists."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_file.return_value = {"content": "existing", "sha": "abc"}
             mock_get.return_value = mock_client
 
-            result = await execute_tool("create_note", {
-                "path": "existing.md",
-                "content": "# Content",
-            })
+            result = await execute_tool(
+                "create_note",
+                {
+                    "path": "existing.md",
+                    "content": "# Content",
+                },
+            )
 
             assert "already exists" in result.lower()
 
     @pytest.mark.asyncio
     async def test_list_directory(self):
         """Test listing directory contents."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.list_directory.return_value = [
                 {"name": "note1.md", "type": "file"},
@@ -215,9 +209,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_search_vault(self):
         """Test searching the vault."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.search_files.return_value = [
                 {"name": "meeting.md", "path": "Project/meeting.md"},
@@ -231,9 +223,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_create_daily_note_success(self):
         """Test creating a daily note with template."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_daily_note_path.return_value = (
                 "Timestamps/2025/11-November/2025-11-23-Sunday.md"
@@ -252,9 +242,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_create_daily_note_already_exists(self):
         """Test creating a daily note that already exists."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_daily_note_path.return_value = (
                 "Timestamps/2025/11-November/2025-11-23-Sunday.md"
@@ -272,9 +260,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_append_to_daily_note_auto_create(self):
         """Test appending to daily note that auto-creates if missing."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ) as mock_get:
+        with patch("src.tools.vault_tools.get_github_vault_client") as mock_get:
             mock_client = AsyncMock()
             mock_client.get_daily_note_path.return_value = (
                 "Timestamps/2025/11-November/2025-11-23-Sunday.md"
@@ -292,10 +278,13 @@ class TestVaultToolExecution:
             mock_client.update_file.return_value = {}
             mock_get.return_value = mock_client
 
-            result = await execute_tool("append_to_daily_note", {
-                "section": "quick_capture",
-                "content": "Test item",
-            })
+            result = await execute_tool(
+                "append_to_daily_note",
+                {
+                    "section": "quick_capture",
+                    "content": "Test item",
+                },
+            )
 
             # Should either succeed or report section not found
             assert "Added to" in result or "not found" in result.lower()
@@ -303,9 +292,7 @@ class TestVaultToolExecution:
     @pytest.mark.asyncio
     async def test_unknown_tool(self):
         """Test executing an unknown tool."""
-        with patch(
-            "src.tools.vault_tools.get_github_vault_client"
-        ):
+        with patch("src.tools.vault_tools.get_github_vault_client"):
             result = await execute_tool("unknown_tool", {})
 
             assert "Unknown tool" in result

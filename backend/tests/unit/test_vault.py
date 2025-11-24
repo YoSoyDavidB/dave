@@ -19,9 +19,7 @@ def test_get_file_success(client: TestClient) -> None:
         "path": "test.md",
     }
 
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.get_file.return_value = mock_file
         mock_get_client.return_value = mock_client
@@ -36,26 +34,19 @@ def test_get_file_success(client: TestClient) -> None:
 
 def test_get_file_not_found(client: TestClient) -> None:
     """Test getting a non-existent file."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.get_file.return_value = None
         mock_get_client.return_value = mock_client
 
-        response = client.get(
-            "/api/v1/vault/file",
-            params={"path": "nonexistent.md"}
-        )
+        response = client.get("/api/v1/vault/file", params={"path": "nonexistent.md"})
 
         assert response.status_code == 404
 
 
 def test_create_file_success(client: TestClient) -> None:
     """Test creating a new file."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.get_file.return_value = None  # File doesn't exist
         mock_client.create_file.return_value = {"content": {"sha": "new123"}}
@@ -75,9 +66,7 @@ def test_create_file_success(client: TestClient) -> None:
 
 def test_create_file_already_exists(client: TestClient) -> None:
     """Test creating a file that already exists."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.get_file.return_value = {"content": "existing", "sha": "abc"}
         mock_get_client.return_value = mock_client
@@ -100,9 +89,7 @@ def test_list_directory(client: TestClient) -> None:
         {"name": "subfolder", "path": "Inbox/subfolder", "type": "dir"},
     ]
 
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.list_directory.return_value = mock_items
         mock_get_client.return_value = mock_client
@@ -122,9 +109,7 @@ def test_search_vault(client: TestClient) -> None:
         {"name": "meetings.md", "path": "Area/meetings.md"},
     ]
 
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.search_files.return_value = mock_results
         mock_get_client.return_value = mock_client
@@ -144,9 +129,7 @@ def test_get_daily_note(client: TestClient) -> None:
         "path": "Timestamps/2024/11/2024-11-22 Friday.md",
     }
 
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.get_daily_note_path.return_value = mock_note["path"]
         mock_client.get_file.return_value = mock_note
@@ -161,9 +144,7 @@ def test_get_daily_note(client: TestClient) -> None:
 
 def test_get_daily_note_not_found(client: TestClient) -> None:
     """Test getting daily note when it doesn't exist."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.get_daily_note_path.return_value = "Timestamps/2024/11/2024-11-23.md"
         mock_client.get_file.return_value = None
@@ -176,9 +157,7 @@ def test_get_daily_note_not_found(client: TestClient) -> None:
 
 def test_update_file_success(client: TestClient) -> None:
     """Test updating an existing file."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.update_file.return_value = {"content": {"sha": "updated123"}}
         mock_get_client.return_value = mock_client
@@ -198,9 +177,7 @@ def test_update_file_success(client: TestClient) -> None:
 
 def test_list_directory_empty(client: TestClient) -> None:
     """Test listing an empty directory."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.list_directory.return_value = []
         mock_get_client.return_value = mock_client
@@ -213,9 +190,7 @@ def test_list_directory_empty(client: TestClient) -> None:
 
 def test_search_vault_no_results(client: TestClient) -> None:
     """Test searching with no results."""
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.search_files.return_value = []
         mock_get_client.return_value = mock_client
@@ -234,9 +209,7 @@ def test_list_directory_root(client: TestClient) -> None:
         {"name": "README.md", "path": "README.md", "type": "file"},
     ]
 
-    with patch(
-        "src.api.routes.vault.get_github_vault_client"
-    ) as mock_get_client:
+    with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.list_directory.return_value = mock_items
         mock_get_client.return_value = mock_client

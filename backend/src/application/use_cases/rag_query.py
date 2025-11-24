@@ -178,15 +178,17 @@ class RAGQueryUseCase:
 
                 # Convert to UploadedDocChunk objects
                 for r in uploaded_results:
-                    uploaded_docs.append(UploadedDocChunk(
-                        chunk_id=r["chunk_id"],
-                        content=r["content"],
-                        score=r["score"],
-                        document_id=r["document_id"],
-                        filename=r["filename"],
-                        category=r["category"],
-                        chunk_index=r["chunk_index"],
-                    ))
+                    uploaded_docs.append(
+                        UploadedDocChunk(
+                            chunk_id=r["chunk_id"],
+                            content=r["content"],
+                            score=r["score"],
+                            document_id=r["document_id"],
+                            filename=r["filename"],
+                            category=r["category"],
+                            chunk_index=r["chunk_index"],
+                        )
+                    )
 
             except Exception as e:
                 logger.error("uploaded_doc_search_error", error=str(e))
@@ -279,32 +281,38 @@ class RAGQueryUseCase:
         for memory in memories:
             # Use relevance_score as the score, weighted
             weighted_score = memory.relevance_score * self._memory_weight
-            combined.append(ScoredItem(
-                item=memory,
-                score=weighted_score,
-                content=memory.short_text,
-                source_type="memory",
-            ))
+            combined.append(
+                ScoredItem(
+                    item=memory,
+                    score=weighted_score,
+                    content=memory.short_text,
+                    source_type="memory",
+                )
+            )
 
         # Add vault documents with weighted scores
         for doc in documents:
             weighted_score = doc.score * self._document_weight
-            combined.append(ScoredItem(
-                item=doc,
-                score=weighted_score,
-                content=doc.content,
-                source_type="document",
-            ))
+            combined.append(
+                ScoredItem(
+                    item=doc,
+                    score=weighted_score,
+                    content=doc.content,
+                    source_type="document",
+                )
+            )
 
         # Add uploaded documents with weighted scores
         for uploaded_doc in uploaded_docs:
             weighted_score = uploaded_doc.score * self._uploaded_doc_weight
-            combined.append(ScoredItem(
-                item=uploaded_doc,
-                score=weighted_score,
-                content=uploaded_doc.content,
-                source_type="uploaded_doc",
-            ))
+            combined.append(
+                ScoredItem(
+                    item=uploaded_doc,
+                    score=weighted_score,
+                    content=uploaded_doc.content,
+                    source_type="uploaded_doc",
+                )
+            )
 
         return combined
 
@@ -378,10 +386,7 @@ class RAGQueryUseCase:
                 type_label = memory.memory_type.value.title()
                 memory_lines.append(f"- [{type_label}] {memory.short_text}")
 
-            parts.append(
-                "## User Context (from memory)\n"
-                + "\n".join(memory_lines)
-            )
+            parts.append("## User Context (from memory)\n" + "\n".join(memory_lines))
 
         # Format vault documents
         if documents:
@@ -398,10 +403,7 @@ class RAGQueryUseCase:
 
                 doc_lines.append(f"### {source}\n{content}")
 
-            parts.append(
-                "## Relevant Knowledge (from vault)\n"
-                + "\n\n".join(doc_lines)
-            )
+            parts.append("## Relevant Knowledge (from vault)\n" + "\n\n".join(doc_lines))
 
         # Format uploaded documents
         if uploaded_docs:
@@ -415,10 +417,7 @@ class RAGQueryUseCase:
                 source = f"{udoc.filename} [{udoc.category}]"
                 uploaded_lines.append(f"### {source}\n{content}")
 
-            parts.append(
-                "## Relevant Documents (uploaded)\n"
-                + "\n\n".join(uploaded_lines)
-            )
+            parts.append("## Relevant Documents (uploaded)\n" + "\n\n".join(uploaded_lines))
 
         if not parts:
             return ""
