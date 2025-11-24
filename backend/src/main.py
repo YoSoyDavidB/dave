@@ -61,6 +61,7 @@ def create_app() -> FastAPI:
         app.add_middleware(
             TrustedHostMiddleware,
             allowed_hosts=[
+                "api-dave.davidbuitrago.dev",
                 "dave.davidbuitrago.dev",
                 "www.dave.davidbuitrago.dev",
                 "testserver",  # For TestClient in tests
