@@ -188,7 +188,7 @@ class MemoryExtractionUseCase:
                 "/chat/completions",
                 json={
                     # Fast, cheap model for extraction
-                    "model": "anthropic/claude-3.5-haiku",
+                    "model": "meta-llama/llama-3.2-3b-instruct:free",
                     "messages": [{"role": "user", "content": prompt}],
                     # Low temperature for consistent extraction
                     "temperature": 0.1,

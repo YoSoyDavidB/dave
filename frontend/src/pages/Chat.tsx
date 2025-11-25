@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, FormEvent } from 'react'
-import { Send, Sparkles, Search, MoreVertical, Square, Loader2 } from 'lucide-react'
+import { Send, Sparkles, Search, MoreVertical, Square, Loader2, Menu } from 'lucide-react'
 import { useChatStore } from '../stores/chatStore'
 import ChatHistory from '../components/chat/ChatHistory'
 import MarkdownMessage from '../components/chat/MarkdownMessage'
@@ -81,6 +81,7 @@ function StreamingIndicator({ status, tool }: { status: string; tool: string | n
 
 export default function Chat() {
   const [input, setInput] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const {
     messages,
@@ -128,17 +129,17 @@ export default function Chat() {
       {/* Main chat area */}
       <div className="flex-1 flex flex-col">
         {/* Chat header */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-white/[0.06]">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between px-3 md:px-6 py-3 border-b border-white/[0.06]">
+          <div className="flex items-center gap-2 md:gap-3">
             <div className="glow-soft rounded-xl">
               <SmokeOrb size="md" />
             </div>
             <div>
-              <h2 className="text-white font-medium flex items-center gap-2">
+              <h2 className="text-white font-medium flex items-center gap-2 text-sm md:text-base">
                 Dave
                 <span className={`w-2 h-2 rounded-full ${isLoading ? 'bg-[#F0FF3D] animate-pulse' : 'notification-dot'}`}></span>
               </h2>
-              <span className="text-xs text-zinc-500">
+              <span className="text-xs text-zinc-500 hidden sm:block">
                 {isLoading ? (
                   <StreamingIndicator status={streamStatus} tool={currentTool} />
                 ) : (
@@ -147,18 +148,26 @@ export default function Chat() {
               </span>
             </div>
           </div>
-          <button className="p-2.5 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-zinc-500 hover:text-[#F0FF3D]">
-            <MoreVertical size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory(!showHistory)}
+              className="lg:hidden p-2 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-zinc-500 hover:text-[#F0FF3D]"
+            >
+              <Menu size={20} />
+            </button>
+            <button className="p-2 md:p-2.5 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-zinc-500 hover:text-[#F0FF3D]">
+              <MoreVertical size={18} className="md:w-5 md:h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto">
-          <div className="max-w-3xl mx-auto px-6 py-8">
+          <div className="max-w-3xl mx-auto px-3 md:px-6 py-4 md:py-8">
             {messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center min-h-[400px]">
+              <div className="flex flex-col items-center justify-center min-h-[300px] md:min-h-[400px]">
                 {/* Large animated smoke orb avatar */}
-                <div className="relative mb-8 animate-float">
+                <div className="relative mb-6 md:mb-8 animate-float">
                   <div className="glow-primary rounded-full">
                     <SmokeOrb size="lg" />
                   </div>
@@ -168,27 +177,27 @@ export default function Chat() {
                 </div>
 
                 {/* Welcome text */}
-                <h1 className="text-3xl font-semibold text-white mb-3 text-center">
+                <h1 className="text-2xl md:text-3xl font-semibold text-white mb-3 text-center px-4">
                   Hey there! What can<br />I help you with?
                 </h1>
-                <p className="text-zinc-500 text-center max-w-md">
+                <p className="text-zinc-500 text-center max-w-md text-sm md:text-base px-4">
                   I'm Dave, your AI friend for productivity and learning English.
                 </p>
 
                 {/* Quick action buttons with glow border effect */}
-                <div className="flex gap-3 mt-8">
-                  <button className="px-4 py-2.5 rounded-xl btn-glow-border text-sm">
+                <div className="flex flex-col sm:flex-row gap-3 mt-6 md:mt-8 px-4">
+                  <button className="px-4 py-2.5 rounded-xl btn-glow-border text-sm whitespace-nowrap">
                     <Sparkles size={14} className="inline mr-2" />
                     Generate ideas
                   </button>
-                  <button className="px-4 py-2.5 rounded-xl btn-glow-border text-sm">
+                  <button className="px-4 py-2.5 rounded-xl btn-glow-border text-sm whitespace-nowrap">
                     <Search size={14} className="inline mr-2" />
                     Research topic
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-4 md:space-y-6">
                 {messages.map((message, index) => {
                   // Skip empty assistant messages that are still being streamed
                   if (message.role === 'assistant' && !message.content && index === messages.length - 1 && isLoading) {
@@ -200,14 +209,14 @@ export default function Chat() {
                       key={index}
                       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div className="flex items-start gap-3 max-w-[80%]">
+                      <div className="flex items-start gap-2 md:gap-3 max-w-[90%] sm:max-w-[85%] md:max-w-[80%]">
                         {message.role === 'assistant' && (
                           <div className="flex-shrink-0">
                             <SmokeOrb size="sm" />
                           </div>
                         )}
                         <div
-                          className={`px-4 py-3 rounded-2xl ${
+                          className={`px-3 md:px-4 py-2.5 md:py-3 rounded-2xl text-sm md:text-base ${
                             message.role === 'user'
                               ? 'message-user rounded-br-md'
                               : 'message-assistant rounded-bl-md'
@@ -277,7 +286,7 @@ export default function Chat() {
         </div>
 
         {/* Input area */}
-        <div className="p-6">
+        <div className="p-3 md:p-6">
           <div className="max-w-3xl mx-auto">
             <form onSubmit={handleSubmit}>
               <div className="chat-input rounded-2xl p-2">
@@ -286,32 +295,32 @@ export default function Chat() {
                     type="text"
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Start your request, and let Dave handle everything..."
+                    placeholder="Ask me anything..."
                     disabled={isLoading}
-                    className="flex-1 bg-transparent px-4 py-2.5 text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50"
+                    className="flex-1 bg-transparent px-3 md:px-4 py-2 md:py-2.5 text-sm md:text-base text-white placeholder-zinc-500 focus:outline-none disabled:opacity-50"
                   />
                   {isLoading ? (
                     <button
                       type="button"
                       onClick={handleCancel}
-                      className="p-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-all duration-200"
+                      className="p-2 md:p-3 bg-red-500/20 hover:bg-red-500/30 text-red-400 rounded-xl transition-all duration-200"
                       title="Cancel"
                     >
-                      <Square size={18} />
+                      <Square size={16} className="md:w-[18px] md:h-[18px]" />
                     </button>
                   ) : (
                     <button
                       type="submit"
                       disabled={!input.trim()}
-                      className="p-3 btn-gradient rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
+                      className="p-2 md:p-3 btn-gradient rounded-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none"
                     >
-                      <Send size={18} />
+                      <Send size={16} className="md:w-[18px] md:h-[18px]" />
                     </button>
                   )}
                 </div>
 
-                {/* Options row */}
-                <div className="flex items-center gap-4 px-4 py-2.5 mt-1 border-t border-white/[0.06]">
+                {/* Options row - Hidden on mobile */}
+                <div className="hidden sm:flex items-center gap-4 px-4 py-2.5 mt-1 border-t border-white/[0.06]">
                   <button
                     type="button"
                     className="flex items-center gap-2 text-sm text-zinc-500 hover:text-[#F0FF3D] transition-colors"
@@ -333,8 +342,18 @@ export default function Chat() {
         </div>
       </div>
 
-      {/* History sidebar */}
-      <ChatHistory onNewChat={handleNewChat} />
+      {/* History sidebar - Hidden on mobile by default, shown on large screens */}
+      <div className={`${showHistory ? 'block' : 'hidden'} lg:block fixed lg:relative inset-0 lg:inset-auto z-40 lg:z-auto`}>
+        {showHistory && (
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm lg:hidden"
+            onClick={() => setShowHistory(false)}
+          />
+        )}
+        <div className="relative lg:relative">
+          <ChatHistory onNewChat={handleNewChat} />
+        </div>
+      </div>
     </div>
   )
 }

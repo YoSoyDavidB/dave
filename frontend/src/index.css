@@ -29,8 +29,16 @@ body {
   @apply text-white;
   background: var(--bg-primary);
   min-height: 100vh;
+  min-height: -webkit-fill-available;
   position: relative;
   overflow-x: hidden;
+  /* Safe area insets for notched devices */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+html {
+  height: -webkit-fill-available;
 }
 
 /* Mesh gradient background */
@@ -72,6 +80,24 @@ body > #root {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(240, 255, 61, 0.4);
+}
+
+/* Hide scrollbar utility */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Touch-friendly tap target sizes */
+@media (max-width: 768px) {
+  button, a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 /* Glowing effects */

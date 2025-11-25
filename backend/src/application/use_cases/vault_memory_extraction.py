@@ -2,7 +2,7 @@
 
 import re
 from datetime import datetime
-from typing import Any
+from typing import Any, cast
 
 import httpx
 import structlog
@@ -101,6 +101,25 @@ class VaultMemoryExtraction:
         # Default to today
         return datetime.utcnow()
 
+    def _extract_checkboxes_from_content(self, content: str) -> list[str]:
+        """Extract uncompleted checkboxes from markdown content.
+
+        Returns:
+            List of task texts (without the checkbox prefix)
+        """
+        tasks = []
+        # Match uncompleted checkboxes: - [ ] Task text
+        pattern = r"^[\s]*-\s*\[\s*\]\s*(.+)$"
+
+        for line in content.split("\n"):
+            match = re.match(pattern, line)
+            if match:
+                task_text = match.group(1).strip()
+                if task_text:  # Only add non-empty tasks
+                    tasks.append(task_text)
+
+        return tasks
+
     async def extract_from_daily_note(
         self,
         path: str,
@@ -123,6 +142,8 @@ class VaultMemoryExtraction:
                 return []
 
             content = file_data["content"]
+            print(f"[DEBUG] File content length: {len(content)} chars")
+            print(f"[DEBUG] First 500 chars: {content[:500]}")
 
             # Extract note date
             note_date = self._extract_note_date(path, content)
@@ -133,37 +154,61 @@ class VaultMemoryExtraction:
                 logger.debug("vault_note_too_old", path=path, days_old=days_old)
                 return []
 
-            # Call LLM to extract tasks/goals
-            raw_items = await self._call_extraction_llm(content, note_date)
+            # First, try to extract checkboxes directly with regex (faster and more reliable)
+            checkbox_tasks = self._extract_checkboxes_from_content(content)
+            print(f"[DEBUG] Found {len(checkbox_tasks)} checkboxes in {path}")
+            if checkbox_tasks:
+                print(f"[DEBUG] Checkbox tasks: {checkbox_tasks[:3]}...")  # Print first 3
+
+            # If we found checkboxes, use them directly
+            if checkbox_tasks:
+                raw_items = [
+                    {
+                        "text": task,
+                        "type": "task",
+                        "confidence": 1.0,  # High confidence for explicit checkboxes
+                    }
+                    for task in checkbox_tasks
+                ]
+                logger.info("extracted_checkboxes_from_note", path=path, count=len(checkbox_tasks))
+            else:
+                # Fallback to LLM extraction for implicit tasks/goals
+                raw_items = await self._call_extraction_llm(content, note_date)
 
             if not raw_items:
                 logger.debug("no_tasks_found_in_note", path=path)
+                print(f"[DEBUG] No raw_items found for {path}")
                 return []
 
+            print(f"[DEBUG] Processing {len(raw_items)} raw items from {path}")
             # Convert to Memory objects
             memories = []
             for raw in raw_items:
                 try:
-                    memory_type = MemoryType.TASK if raw["type"] == "task" else MemoryType.GOAL
+                    # Type assertion for raw dict
+                    raw_dict: dict[str, object] = raw  # type: ignore
+                    memory_type = MemoryType.TASK if raw_dict["type"] == "task" else MemoryType.GOAL
 
                     # Parse due date if present
                     due_date = None
-                    if "due_date" in raw and raw["due_date"]:
+                    if "due_date" in raw_dict and raw_dict["due_date"]:
+                        due_str = str(raw_dict["due_date"])
                         try:
-                            due_date = datetime.fromisoformat(
-                                raw["due_date"].replace("Z", "+00:00")
-                            )
+                            due_date = datetime.fromisoformat(due_str.replace("Z", "+00:00"))
                         except ValueError:
-                            logger.warning("invalid_due_date_vault", date=raw["due_date"])
+                            logger.warning("invalid_due_date_vault", date=due_str)
 
+                    text = str(raw_dict["text"])
+                    confidence_val = raw_dict.get("confidence", 0.8)
+                    confidence = float(cast(float, confidence_val))
                     memory = Memory(
                         user_id=user_id,
-                        short_text=raw["text"][:500],
+                        short_text=text[:500],
                         memory_type=memory_type,
-                        relevance_score=raw.get("confidence", 0.8),
+                        relevance_score=confidence,
                         source=f"vault:{path}",
                         metadata={
-                            "extraction_confidence": raw.get("confidence", 0.8),
+                            "extraction_confidence": confidence,
                             "note_date": note_date.isoformat(),
                         },
                         due_date=due_date,
@@ -174,15 +219,24 @@ class VaultMemoryExtraction:
                     logger.warning("invalid_vault_item_format", error=str(e), raw=raw)
                     continue
 
+            print(f"[DEBUG] Created {len(memories)} Memory objects from {path}")
+
             # Filter duplicates
             memories = await self._filter_duplicates(memories, user_id)
 
+            print(
+                f"[DEBUG] After filtering duplicates: "
+                f"{len(memories)} memories remaining from {path}"
+            )
             if not memories:
                 logger.debug("all_vault_items_were_duplicates", path=path)
+                print(f"[DEBUG] All items were duplicates for {path}")
                 return []
 
             # Store memories
+            print(f"[DEBUG] Attempting to store {len(memories)} memories from {path}")
             stored = await self._memory_repo.bulk_create(memories)
+            print(f"[DEBUG] Successfully stored {len(stored)} memories from {path}")
 
             logger.info(
                 "vault_memories_extracted",
@@ -214,7 +268,7 @@ class VaultMemoryExtraction:
             response = await client.post(
                 "/chat/completions",
                 json={
-                    "model": "anthropic/claude-3.5-haiku",
+                    "model": "meta-llama/llama-3.2-3b-instruct:free",
                     "messages": [{"role": "user", "content": prompt}],
                     "temperature": 0.1,
                     "max_tokens": 1000,
@@ -279,6 +333,11 @@ class VaultMemoryExtraction:
             if similar:
                 # Found duplicate, boost existing instead
                 existing, score = similar[0]
+                print("[DEBUG] DUPLICATE FOUND:")
+                print(f"[DEBUG]   New task: {memory.short_text[:100]}")
+                print(f"[DEBUG]   Existing: {existing.short_text[:100]}")
+                print(f"[DEBUG]   Similarity: {score}")
+                print(f"[DEBUG]   Existing source: {existing.source}")
                 logger.debug(
                     "duplicate_vault_task_skipped",
                     new_text=memory.short_text[:50],
@@ -305,6 +364,8 @@ class VaultMemoryExtraction:
         Returns:
             All extracted memories from recent notes
         """
+        logger.info("process_recent_daily_notes_started", user_id=user_id, days=days)
+        print(f"[DEBUG] process_recent_daily_notes called for user: {user_id}, days: {days}")
         all_memories = []
 
         try:
@@ -323,22 +384,35 @@ class VaultMemoryExtraction:
                 # Search for this specific date in Timestamps folder
                 search_queries.append(f"Timestamps {date_str}")
 
+            print(
+                f"[DEBUG] Generated {len(search_queries)} search queries: {search_queries[:3]}..."
+            )
+
             for query in search_queries:
                 try:
+                    print(f"[DEBUG] Searching with query: {query}")
                     results = await self._vault_client.search_files(query)
+                    print(f"[DEBUG] Found {len(results)} results for query: {query}")
                     logger.info("vault_search_results", query=query, count=len(results))
 
                     for result in results:
                         path = result["path"]
+                        print(f"[DEBUG] Checking file: {path}")
                         # Only process if it's actually in Timestamps folder and looks like a date
                         if "Timestamps" in path or "Daily" in path or "Journal" in path:
                             logger.info("processing_daily_note", path=path)
+                            print(f"[DEBUG] Processing daily note: {path}")
 
                             # Extract memories from this note
                             memories = await self.extract_from_daily_note(path, user_id)
                             all_memories.extend(memories)
+                            print(f"[DEBUG] Extracted {len(memories)} memories from {path}")
                             logger.info(
                                 "extracted_from_note", path=path, memories_count=len(memories)
+                            )
+                        else:
+                            print(
+                                f"[DEBUG] Skipping file (not in Timestamps/Daily/Journal): {path}"
                             )
 
                 except Exception as e:

@@ -24,6 +24,14 @@ export interface Goal {
   created_at: string;
 }
 
+export interface Task {
+  memory_id: string;
+  task_text: string;
+  due_date: string | null;
+  created_at: string;
+  source: string;
+}
+
 export interface RemindersResponse {
   reminders: Reminder[];
   count: number;
@@ -31,6 +39,11 @@ export interface RemindersResponse {
 
 export interface GoalsResponse {
   goals: Goal[];
+  count: number;
+}
+
+export interface TasksResponse {
+  tasks: Task[];
   count: number;
 }
 
@@ -67,6 +80,17 @@ export async function getActiveGoals(): Promise<GoalsResponse> {
   const response = await fetch(`${API_BASE_URL}/proactive/goals`, defaultFetchOptions);
   if (!response.ok) {
     throw new Error('Failed to fetch goals');
+  }
+  return response.json();
+}
+
+/**
+ * Get all pending tasks (regardless of due date)
+ */
+export async function getPendingTasks(): Promise<TasksResponse> {
+  const response = await fetch(`${API_BASE_URL}/proactive/tasks`, defaultFetchOptions);
+  if (!response.ok) {
+    throw new Error('Failed to fetch tasks');
   }
   return response.json();
 }

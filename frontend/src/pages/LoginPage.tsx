@@ -36,23 +36,23 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 md:p-6">
       <div className="w-full max-w-md">
         {/* Logo and welcome */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="relative mb-6 animate-float">
+        <div className="flex flex-col items-center mb-6 md:mb-8">
+          <div className="relative mb-4 md:mb-6 animate-float">
             <div className="glow-primary rounded-full">
               <SmokeOrb />
             </div>
             <div className="absolute -inset-4 rounded-full border border-[#F0FF3D]/20 animate-pulse" style={{ animationDuration: '3s' }} />
           </div>
-          <h1 className="text-3xl font-semibold text-white mb-2">Welcome back</h1>
-          <p className="text-zinc-500 text-center">Sign in to continue with Dave</p>
+          <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2">Welcome back</h1>
+          <p className="text-zinc-500 text-center text-sm md:text-base">Sign in to continue with Dave</p>
         </div>
 
         {/* Login form card */}
-        <div className="glass-card p-8">
-          <form onSubmit={handleSubmit} className="space-y-5">
+        <div className="glass-card p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="space-y-4 md:space-y-5">
             {/* Email field */}
             <div>
               <label className="block mb-2 text-sm font-medium text-zinc-400">Email</label>

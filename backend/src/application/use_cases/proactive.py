@@ -141,6 +141,36 @@ class ProactiveService:
             logger.error("get_goals_failed", user_id=user_id, error=str(e))
             return []
 
+    async def get_all_pending_tasks(self, user_id: str) -> list[Memory]:
+        """Get all pending tasks (completed=False) regardless of due date.
+
+        Args:
+            user_id: User to get tasks for
+
+        Returns:
+            List of all pending task memories
+        """
+        try:
+            tasks = await self._memory_repo.get_by_type(
+                user_id=user_id,
+                memory_type=MemoryType.TASK,
+            )
+
+            # Filter to only non-completed tasks
+            pending_tasks = [t for t in tasks if not t.completed]
+
+            logger.info(
+                "pending_tasks_retrieved",
+                user_id=user_id,
+                count=len(pending_tasks),
+            )
+
+            return pending_tasks
+
+        except Exception as e:
+            logger.error("get_pending_tasks_failed", user_id=user_id, error=str(e))
+            return []
+
 
 # Singleton instance
 _proactive_service: ProactiveService | None = None

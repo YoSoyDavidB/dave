@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, RefreshCw } from 'lucide-react';
-import { getReminders, getActiveGoals, syncVaultTasks, type Reminder, type Goal } from '../../services/proactive';
+import { getPendingTasks, getActiveGoals, syncVaultTasks, type Task, type Goal } from '../../services/proactive';
 
 interface NotificationBellProps {
   className?: string;
@@ -12,12 +12,12 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ className = '' }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [reminders, setReminders] = useState<Reminder[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [loading, setLoading] = useState(false);
   const [syncing, setSyncing] = useState(false);
 
-  const totalCount = reminders.length + goals.length;
+  const totalCount = tasks.length + goals.length;
 
   useEffect(() => {
     // Load notifications on mount and every 5 minutes
@@ -29,32 +29,17 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
   const loadNotifications = async () => {
     try {
       setLoading(true);
-      const [remindersData, goalsData] = await Promise.all([
-        getReminders(),
+      const [tasksData, goalsData] = await Promise.all([
+        getPendingTasks(),
         getActiveGoals(),
       ]);
-      setReminders(remindersData.reminders);
+      setTasks(tasksData.tasks);
       setGoals(goalsData.goals);
     } catch (error) {
       console.error('Failed to load notifications:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const formatDueDate = (hoursUntilDue: number): string => {
-    if (hoursUntilDue < 0) {
-      const hoursOverdue = Math.abs(hoursUntilDue);
-      if (hoursOverdue < 24) {
-        return `${Math.floor(hoursOverdue)}h overdue`;
-      }
-      return `${Math.floor(hoursOverdue / 24)}d overdue`;
-    }
-
-    if (hoursUntilDue < 24) {
-      return `${Math.floor(hoursUntilDue)}h left`;
-    }
-    return `${Math.floor(hoursUntilDue / 24)}d left`;
   };
 
   const handleSyncVault = async () => {
@@ -118,31 +103,25 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                 </div>
               ) : (
                 <>
-                  {/* Reminders section */}
-                  {reminders.length > 0 && (
+                  {/* Tasks section */}
+                  {tasks.length > 0 && (
                     <div className="border-b border-gray-200 dark:border-gray-700">
                       <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
-                        Tasks ({reminders.length})
+                        Tasks ({tasks.length})
                       </div>
-                      {reminders.map((reminder) => (
+                      {tasks.map((task) => (
                         <div
-                          key={reminder.memory_id}
+                          key={task.memory_id}
                           className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <p className="text-sm text-gray-900 dark:text-white flex-1">
-                              {reminder.task_text}
+                          <p className="text-sm text-gray-900 dark:text-white">
+                            {task.task_text}
+                          </p>
+                          {task.source && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                              {task.source.replace('vault:', '')}
                             </p>
-                            <span
-                              className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap ${
-                                reminder.is_overdue
-                                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                              }`}
-                            >
-                              {formatDueDate(reminder.hours_until_due)}
-                            </span>
-                          </div>
+                          )}
                         </div>
                       ))}
                     </div>

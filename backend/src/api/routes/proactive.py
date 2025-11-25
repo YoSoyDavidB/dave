@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Any
 
 import structlog
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 
 from src.api.routes.auth import get_current_user
@@ -34,6 +34,16 @@ class GoalResponse(BaseModel):
     progress: float
     last_referenced: datetime
     created_at: datetime
+
+
+class TaskResponse(BaseModel):
+    """Response model for a pending task."""
+
+    memory_id: str
+    task_text: str
+    due_date: datetime | None
+    created_at: datetime
+    source: str
 
 
 class MarkCompletedRequest(BaseModel):
@@ -153,33 +163,81 @@ async def get_active_goals(
         raise HTTPException(status_code=500, detail="Failed to get goals")
 
 
+@router.get("/tasks")
+async def get_pending_tasks(
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Get all pending tasks regardless of due date.
+
+    Returns all tasks that are not completed (completed=False).
+
+    Returns:
+        Dict with list of pending tasks
+    """
+    try:
+        proactive = get_proactive_service()
+        tasks = await proactive.get_all_pending_tasks(current_user.id)
+
+        return {
+            "tasks": [
+                TaskResponse(
+                    memory_id=str(t.memory_id),
+                    task_text=t.short_text,
+                    due_date=t.due_date,
+                    created_at=t.timestamp,
+                    source=t.source,
+                )
+                for t in tasks
+            ],
+            "count": len(tasks),
+        }
+
+    except Exception as e:
+        logger.error("get_tasks_failed", user_id=current_user.id, error=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get tasks")
+
+
 @router.post("/sync-vault-tasks")
 async def sync_vault_tasks(
-    background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user),
 ) -> dict[str, Any]:
     """Sync tasks from vault daily notes.
 
     Extracts tasks and goals from recent daily notes (last 7 days)
-    and stores them as memories. Runs in background.
+    and stores them as memories.
 
     Returns:
-        Status message
+        Status message with count of extracted tasks
     """
+    print(f"[DEBUG] sync_vault_tasks called for user: {current_user.id}")
     try:
+        logger.info("sync_vault_tasks_started", user_id=current_user.id)
+        print("[DEBUG] Getting vault_extraction service...")
         vault_extraction = get_vault_memory_extraction()
 
-        # Run extraction in background to avoid blocking
-        background_tasks.add_task(
-            vault_extraction.process_recent_daily_notes,
+        print("[DEBUG] Starting process_recent_daily_notes...")
+        # Run extraction synchronously to ensure it completes
+        memories = await vault_extraction.process_recent_daily_notes(
             current_user.id,
         )
 
+        print(f"[DEBUG] Extraction complete. Found {len(memories)} memories")
+        logger.info(
+            "sync_vault_tasks_completed",
+            user_id=current_user.id,
+            memories_count=len(memories),
+        )
+
         return {
-            "status": "processing",
-            "message": "Syncing tasks from vault daily notes in background",
+            "status": "completed",
+            "message": f"Synced {len(memories)} tasks/goals from vault",
+            "count": len(memories),
         }
 
     except Exception as e:
+        print(f"[DEBUG] ERROR in sync_vault_tasks: {e}")
+        import traceback
+
+        traceback.print_exc()
         logger.error("sync_vault_tasks_failed", user_id=current_user.id, error=str(e))
-        raise HTTPException(status_code=500, detail="Failed to sync vault tasks")
+        raise HTTPException(status_code=500, detail=f"Failed to sync vault tasks: {str(e)}")

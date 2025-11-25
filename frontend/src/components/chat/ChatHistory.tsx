@@ -48,16 +48,17 @@ export default function ChatHistory({ onNewChat }: ChatHistoryProps) {
   }
 
   return (
-    <div className="w-80 h-full glass flex flex-col border-l border-white/[0.06]">
+    <div className="w-full lg:w-80 h-full glass flex flex-col border-l border-white/[0.06]">
       {/* Header */}
-      <div className="p-4 flex items-center justify-between border-b border-white/[0.06]">
-        <h2 className="text-white font-semibold">Chat History</h2>
+      <div className="p-3 md:p-4 flex items-center justify-between border-b border-white/[0.06]">
+        <h2 className="text-white font-semibold text-sm md:text-base">Chat History</h2>
         <button
           onClick={onNewChat}
-          className="flex items-center gap-2 px-3 py-1.5 btn-gradient text-sm font-medium rounded-lg"
+          className="flex items-center gap-2 px-3 py-1.5 btn-gradient text-xs md:text-sm font-medium rounded-lg"
         >
-          <Plus size={16} />
-          New Chat
+          <Plus size={14} className="md:w-4 md:h-4" />
+          <span className="hidden sm:inline">New Chat</span>
+          <span className="sm:hidden">New</span>
         </button>
       </div>
 
