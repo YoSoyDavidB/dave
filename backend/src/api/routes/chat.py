@@ -9,6 +9,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from src.application.use_cases.graph_enrichment import get_graph_enrichment_use_case
 from src.application.use_cases.memory_extraction import get_memory_extraction_use_case
 from src.application.use_cases.rag_query import RAGContext, get_rag_query_use_case
 from src.infrastructure.openrouter import get_openrouter_client
@@ -199,7 +200,7 @@ async def extract_memories_background(
     user_id: str,
     conversation_id: str,
 ) -> None:
-    """Background task to extract memories from conversation.
+    """Background task to extract memories from conversation and enrich knowledge graph.
 
     Args:
         messages: Conversation messages
@@ -207,12 +208,44 @@ async def extract_memories_background(
         conversation_id: Source conversation
     """
     try:
+        # Extract memories
         extractor = get_memory_extraction_use_case()
-        await extractor.extract_from_conversation(
+        memories = await extractor.extract_from_conversation(
             messages=messages,
             user_id=user_id,
             conversation_id=conversation_id,
         )
+
+        # Enrich knowledge graph with topics and concepts
+        if memories:
+            graph_enricher = get_graph_enrichment_use_case()
+
+            # Create memory nodes in the graph
+            for memory in memories:
+                from src.infrastructure.graph.memory_graph_repository import MemoryGraphRepository
+                from src.infrastructure.graph.neo4j_client import get_neo4j_client
+
+                neo4j_client = get_neo4j_client()
+                graph_repo = MemoryGraphRepository(neo4j_client)
+                await graph_repo.create_memory_node(memory)
+
+            # Extract and link topics/concepts
+            await graph_enricher.enrich_from_conversation(
+                messages=messages,
+                user_id=user_id,
+                memories=memories,
+            )
+
+            # Link related memories
+            await graph_enricher.link_related_memories(memories)
+
+            logger.info(
+                "knowledge_graph_enriched",
+                user_id=user_id,
+                conversation_id=conversation_id,
+                memories_count=len(memories),
+            )
+
     except Exception as e:
         import traceback
 

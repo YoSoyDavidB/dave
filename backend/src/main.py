@@ -17,6 +17,7 @@ from src.api.routes import (
 from src.config import get_settings
 from src.infrastructure.database import init_db
 from src.infrastructure.embeddings import get_embedding_service
+from src.infrastructure.graph.neo4j_client import get_neo4j_client
 from src.infrastructure.scheduler import get_scheduler
 from src.infrastructure.vector_store.qdrant_client import (
     get_qdrant_client,
@@ -113,6 +114,15 @@ def create_app() -> FastAPI:
         # Initialize database tables
         await init_db()
 
+        # Initialize Neo4j connection and schema
+        try:
+            neo4j_client = get_neo4j_client()
+            await neo4j_client.connect()
+            await neo4j_client.initialize_schema()
+            logger.info("neo4j_initialized")
+        except Exception as e:
+            logger.warning("neo4j_init_failed", error=str(e))
+
         # Initialize Qdrant collections
         try:
             await init_qdrant_collections()
@@ -138,6 +148,13 @@ def create_app() -> FastAPI:
         try:
             scheduler = get_scheduler()
             scheduler.shutdown()
+        except Exception:
+            pass
+
+        # Close Neo4j client
+        try:
+            neo4j_client = get_neo4j_client()
+            await neo4j_client.close()
         except Exception:
             pass
 

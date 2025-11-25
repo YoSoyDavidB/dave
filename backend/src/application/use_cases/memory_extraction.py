@@ -36,14 +36,14 @@ Only include memories with confidence >= 0.7. Return empty array [] if nothing n
 
 Example output:
 [
-  {"text": "Prefers concise, direct answers without excessive explanation",
-   "type": "preference", "confidence": 0.9},
-  {"text": "Is a software engineer working with Python and FastAPI",
-   "type": "fact", "confidence": 0.95},
-  {"text": "Needs to finish project documentation",
-   "type": "task", "confidence": 0.85, "due_date": "2025-11-30T23:59:59Z"},
-  {"text": "Wants to improve English speaking skills",
-   "type": "goal", "confidence": 0.85, "progress": 30}
+  {{"text": "Prefers concise, direct answers without excessive explanation",
+   "type": "preference", "confidence": 0.9}},
+  {{"text": "Is a software engineer working with Python and FastAPI",
+   "type": "fact", "confidence": 0.95}},
+  {{"text": "Needs to finish project documentation",
+   "type": "task", "confidence": 0.85, "due_date": "2025-11-30T23:59:59Z"}},
+  {{"text": "Wants to improve English speaking skills",
+   "type": "goal", "confidence": 0.85, "progress": 30}}
 ]
 
 Conversation:
