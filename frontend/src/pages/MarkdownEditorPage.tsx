@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Save, X, Loader2, Check, AlertCircle, Zap } from 'lucide-react'
 import MarkdownEditor from '../components/editor/MarkdownEditor'
@@ -59,7 +59,7 @@ export default function MarkdownEditorPage() {
     }
   }, [navigate])
 
-  const loadFile = async () => {
+  const loadFile = useCallback(async () => {
     if (!filePath) return
 
     setIsLoading(true)
@@ -73,7 +73,7 @@ export default function MarkdownEditorPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [filePath])
 
   const handleClose = () => {
     if (hasUnsavedChanges) {

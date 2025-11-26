@@ -156,7 +156,7 @@ export default function AIAssistantPlugin({ conversationId, showButton = false }
     return () => {
       window.removeEventListener('open-ai-assistant', handleEvent)
     }
-  }, [editor])
+  }, [editor, openAssistant])
 
   return (
     <>
@@ -212,8 +212,8 @@ export default function AIAssistantPlugin({ conversationId, showButton = false }
                       key={option.value}
                       onClick={() => setMode(option.value as AssistantMode)}
                       className={`px-3 py-2 rounded-lg text-sm transition-colors ${mode === option.value
-                          ? 'bg-[#F0FF3D] text-black font-medium'
-                          : 'bg-[var(--bg-input)] text-white hover:bg-[var(--bg-input)]/80'
+                        ? 'bg-[#F0FF3D] text-black font-medium'
+                        : 'bg-[var(--bg-input)] text-white hover:bg-[var(--bg-input)]/80'
                         }`}
                     >
                       {option.label}

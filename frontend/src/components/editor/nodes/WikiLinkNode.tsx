@@ -5,6 +5,7 @@ import {
   SerializedLexicalNode,
   Spread,
 } from 'lexical'
+import WikiLinkComponent from './WikiLinkComponent'
 
 export type SerializedWikiLinkNode = Spread<
   {
@@ -72,31 +73,6 @@ export class WikiLinkNode extends DecoratorNode<JSX.Element> {
   }
 }
 
-function WikiLinkComponent({
-  noteName,
-}: {
-  noteName: string
-  nodeKey: NodeKey
-}) {
-  const handleClick = () => {
-    // Dispatch a custom event that can be caught by the parent component
-    window.dispatchEvent(
-      new CustomEvent('navigate-to-note', {
-        detail: { noteName },
-      })
-    )
-  }
-
-  return (
-    <span
-      className="wiki-link cursor-pointer text-[#F0FF3D] hover:underline"
-      onClick={handleClick}
-      title={`Open ${noteName}`}
-    >
-      [[{noteName}]]
-    </span>
-  )
-}
 
 export function $createWikiLinkNode(noteName: string): WikiLinkNode {
   return new WikiLinkNode(noteName)
