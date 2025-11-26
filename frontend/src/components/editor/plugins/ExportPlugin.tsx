@@ -25,15 +25,6 @@ export default function ExportPlugin() {
     return text
   }
 
-  const getHTML = (): string => {
-    let html = ''
-    editor.getEditorState().read(() => {
-      const root = $getRoot()
-      // Simple HTML conversion - can be enhanced with proper HTML serialization
-      html = root.getTextContent()
-    })
-    return html
-  }
 
   const downloadFile = (content: string, filename: string, mimeType: string) => {
     const blob = new Blob([content], { type: mimeType })

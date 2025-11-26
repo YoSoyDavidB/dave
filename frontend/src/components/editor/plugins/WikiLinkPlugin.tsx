@@ -1,7 +1,7 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { useEffect } from 'react'
 import { $createTextNode, $getSelection, $isRangeSelection, $isTextNode, TextNode } from 'lexical'
-import { $createWikiLinkNode, WikiLinkNode } from '../nodes/WikiLinkNode'
+import { $createWikiLinkNode } from '../nodes/WikiLinkNode'
 
 export default function WikiLinkPlugin() {
   const [editor] = useLexicalComposerContext()

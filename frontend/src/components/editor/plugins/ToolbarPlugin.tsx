@@ -49,7 +49,6 @@ export default function ToolbarPlugin() {
   const [isStrikethrough, setIsStrikethrough] = useState(false)
   const [isCode, setIsCode] = useState(false)
   const [blockType, setBlockType] = useState('paragraph')
-  const [showAIModal, setShowAIModal] = useState(false)
 
   const updateToolbar = useCallback(() => {
     const selection = $getSelection()
@@ -173,9 +172,8 @@ export default function ToolbarPlugin() {
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold')
           }}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            isBold ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${isBold ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Format Bold"
           title="Bold (Cmd+B)"
         >
@@ -185,9 +183,8 @@ export default function ToolbarPlugin() {
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic')
           }}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            isItalic ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${isItalic ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Format Italic"
           title="Italic (Cmd+I)"
         >
@@ -197,9 +194,8 @@ export default function ToolbarPlugin() {
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'underline')
           }}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            isUnderline ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${isUnderline ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Format Underline"
           title="Underline (Cmd+U)"
         >
@@ -209,9 +205,8 @@ export default function ToolbarPlugin() {
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'strikethrough')
           }}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            isStrikethrough ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${isStrikethrough ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Format Strikethrough"
           title="Strikethrough"
         >
@@ -221,9 +216,8 @@ export default function ToolbarPlugin() {
           onClick={() => {
             editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'code')
           }}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            isCode ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${isCode ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Format Code"
           title="Inline Code"
         >
@@ -235,9 +229,8 @@ export default function ToolbarPlugin() {
       <div className="flex items-center gap-1 pr-2 border-r border-[var(--border-color)]">
         <button
           onClick={() => formatParagraph()}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'paragraph' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'paragraph' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Normal Text"
           title="Normal Text"
         >
@@ -245,9 +238,8 @@ export default function ToolbarPlugin() {
         </button>
         <button
           onClick={() => formatHeading('h1')}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'h1' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'h1' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Heading 1"
           title="Heading 1"
         >
@@ -255,9 +247,8 @@ export default function ToolbarPlugin() {
         </button>
         <button
           onClick={() => formatHeading('h2')}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'h2' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'h2' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Heading 2"
           title="Heading 2"
         >
@@ -265,9 +256,8 @@ export default function ToolbarPlugin() {
         </button>
         <button
           onClick={() => formatHeading('h3')}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'h3' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'h3' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Heading 3"
           title="Heading 3"
         >
@@ -279,9 +269,8 @@ export default function ToolbarPlugin() {
       <div className="flex items-center gap-1 pr-2 border-r border-[var(--border-color)]">
         <button
           onClick={formatBulletList}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'bullet' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'bullet' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Bullet List"
           title="Bullet List"
         >
@@ -289,9 +278,8 @@ export default function ToolbarPlugin() {
         </button>
         <button
           onClick={formatNumberedList}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'number' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'number' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Numbered List"
           title="Numbered List"
         >
@@ -299,9 +287,8 @@ export default function ToolbarPlugin() {
         </button>
         <button
           onClick={formatCheckList}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'check' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'check' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Task List"
           title="Task List (Checkboxes)"
         >
@@ -313,9 +300,8 @@ export default function ToolbarPlugin() {
       <div className="flex items-center gap-1 pr-2 border-r border-[var(--border-color)]">
         <button
           onClick={formatQuote}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'quote' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'quote' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Quote"
           title="Quote Block"
         >
@@ -323,9 +309,8 @@ export default function ToolbarPlugin() {
         </button>
         <button
           onClick={formatCode}
-          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${
-            blockType === 'code' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
-          }`}
+          className={`p-2 rounded hover:bg-[var(--bg-input)] transition-colors ${blockType === 'code' ? 'bg-[var(--bg-input)] text-[#F0FF3D]' : 'text-zinc-400'
+            }`}
           aria-label="Code Block"
           title="Code Block"
         >

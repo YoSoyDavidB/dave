@@ -3,7 +3,6 @@ import { $insertNodes } from 'lexical'
 import { useState } from 'react'
 import { Table as TableIcon } from 'lucide-react'
 import {
-  INSERT_TABLE_COMMAND,
   $createTableNodeWithDimensions,
 } from '@lexical/table'
 

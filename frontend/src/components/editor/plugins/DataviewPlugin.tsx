@@ -1,6 +1,6 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { useEffect } from 'react'
-import { $isCodeNode, CodeNode } from '@lexical/code'
+import { CodeNode } from '@lexical/code'
 import { $createDataviewNode, DataviewType } from '../nodes/DataviewNode'
 
 export default function DataviewPlugin() {

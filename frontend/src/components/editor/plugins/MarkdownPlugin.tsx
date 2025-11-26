@@ -17,7 +17,7 @@ export default function MarkdownPlugin({ initialMarkdown, onChange }: MarkdownPl
         $convertFromMarkdownString(initialMarkdown, TRANSFORMERS)
       })
     }
-  }, []) // Only run once on mount
+  }, [editor, initialMarkdown]) // Only run once on mount
 
   // Listen to changes and convert to markdown
   useEffect(() => {

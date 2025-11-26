@@ -67,7 +67,7 @@ export default function FindReplacePlugin() {
 
       const searchText = caseSensitive ? findText : findText.toLowerCase()
 
-      function traverse(node: any) {
+      function traverse(node: LexicalNode) {
         if ($isTextNode(node)) {
           const text = node.getTextContent()
           const searchIn = caseSensitive ? text : text.toLowerCase()

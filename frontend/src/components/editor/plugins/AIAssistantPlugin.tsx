@@ -1,18 +1,17 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { useEffect, useState } from 'react'
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_HIGH, KEY_MODIFIER_COMMAND } from 'lexical'
+import { $getSelection, $isRangeSelection, KEY_MODIFIER_COMMAND } from 'lexical'
 import { Sparkles, Loader2, X } from 'lucide-react'
 import { sendMessageStream } from '../../../services/api'
 
 interface AIAssistantPluginProps {
   conversationId?: string
   showButton?: boolean
-  onTrigger?: () => void
 }
 
 type AssistantMode = 'improve' | 'fix-grammar' | 'make-shorter' | 'make-longer' | 'simplify' | 'custom'
 
-export default function AIAssistantPlugin({ conversationId, showButton = false, onTrigger }: AIAssistantPluginProps) {
+export default function AIAssistantPlugin({ conversationId, showButton = false }: AIAssistantPluginProps) {
   const [editor] = useLexicalComposerContext()
   const [showModal, setShowModal] = useState(false)
   const [selectedText, setSelectedText] = useState('')
@@ -212,11 +211,10 @@ export default function AIAssistantPlugin({ conversationId, showButton = false, 
                     <button
                       key={option.value}
                       onClick={() => setMode(option.value as AssistantMode)}
-                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                        mode === option.value
+                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${mode === option.value
                           ? 'bg-[#F0FF3D] text-black font-medium'
                           : 'bg-[var(--bg-input)] text-white hover:bg-[var(--bg-input)]/80'
-                      }`}
+                        }`}
                     >
                       {option.label}
                     </button>

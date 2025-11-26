@@ -74,7 +74,6 @@ export class WikiLinkNode extends DecoratorNode<JSX.Element> {
 
 function WikiLinkComponent({
   noteName,
-  nodeKey,
 }: {
   noteName: string
   nodeKey: NodeKey

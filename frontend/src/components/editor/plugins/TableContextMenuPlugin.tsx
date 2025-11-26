@@ -10,8 +10,6 @@ import {
   $insertTableColumn__EXPERIMENTAL,
   $deleteTableRow__EXPERIMENTAL,
   $deleteTableColumn__EXPERIMENTAL,
-  $removeTableRowAtIndex,
-  $removeTableColumnAtIndex,
   TableCellNode,
 } from '@lexical/table'
 import {
