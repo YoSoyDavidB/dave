@@ -1,6 +1,7 @@
 import base64
 from datetime import datetime
 from typing import Any
+from urllib.parse import quote
 
 import httpx
 import structlog
@@ -40,9 +41,11 @@ class GitHubVaultClient:
         Returns dict with 'content' and 'sha' or None if not found.
         """
         full_path = self._full_path(path)
+        # Quote the path to handle special characters, but keep slashes
+        encoded_path = quote(full_path, safe="/")
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{encoded_path}",
                 headers=self.headers,
                 timeout=30.0,
             )
@@ -56,11 +59,16 @@ class GitHubVaultClient:
             # Decode base64 content
             content = base64.b64decode(data["content"]).decode("utf-8")
 
+            # Return path relative to vault prefix, not the full GitHub path
+            relative_path = data["path"]
+            if self.vault_prefix and relative_path.startswith(self.vault_prefix + "/"):
+                relative_path = relative_path[len(self.vault_prefix) + 1 :]
+
             logger.info("vault_file_read", path=path)
             return {
                 "content": content,
                 "sha": data["sha"],
-                "path": data["path"],
+                "path": relative_path,
             }
 
     async def create_file(
@@ -75,10 +83,11 @@ class GitHubVaultClient:
             message = f"Create {path} via Dave"
 
         encoded_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+        encoded_path = quote(full_path, safe="/")
 
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{encoded_path}",
                 headers=self.headers,
                 json={
                     "message": message,
@@ -105,10 +114,11 @@ class GitHubVaultClient:
             message = f"Update {path} via Dave"
 
         encoded_content = base64.b64encode(content.encode("utf-8")).decode("utf-8")
+        encoded_path = quote(full_path, safe="/")
 
         async with httpx.AsyncClient() as client:
             response = await client.put(
-                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{encoded_path}",
                 headers=self.headers,
                 json={
                     "message": message,
@@ -126,9 +136,10 @@ class GitHubVaultClient:
     async def list_directory(self, path: str = "") -> list[dict[str, str]]:
         """List files in a directory."""
         full_path = self._full_path(path)
+        encoded_path = quote(full_path, safe="/") if full_path else ""
         async with httpx.AsyncClient() as client:
             response = await client.get(
-                f"{self.base_url}/repos/{self.repo}/contents/{full_path}",
+                f"{self.base_url}/repos/{self.repo}/contents/{encoded_path}",
                 headers=self.headers,
                 timeout=30.0,
             )

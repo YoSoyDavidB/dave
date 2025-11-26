@@ -92,21 +92,40 @@ async def create_file(request: FileCreate) -> dict[str, str]:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.put("/vault/file", response_model=dict[str, str])
+@router.put("/vault/file")
 async def update_file(path: str, request: FileUpdate) -> dict[str, str]:
-    """Update an existing file in the vault."""
+    """Update an existing file in the vault with conflict detection."""
     try:
         client = get_github_vault_client()
 
-        await client.update_file(
+        # Verify SHA hasn't changed (conflict detection)
+        current_file = await client.get_file(path)
+        if current_file is None:
+            raise HTTPException(status_code=404, detail=f"File not found: {path}")
+
+        if current_file["sha"] != request.sha:
+            raise HTTPException(
+                status_code=409,
+                detail={
+                    "error": "conflict",
+                    "message": "File has been modified by someone else",
+                    "current_sha": current_file["sha"],
+                    "current_content": current_file["content"],
+                },
+            )
+
+        result = await client.update_file(
             path=path,
             content=request.content,
             sha=request.sha,
-            message=request.message,
+            message=request.message or f"Update {path} via Dave Editor",
         )
 
-        return {"status": "updated", "path": path}
+        # Return new SHA for next save
+        return {"status": "updated", "path": path, "sha": result["content"]["sha"]}
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error("vault_update_file_error", path=path, error=str(e))
         raise HTTPException(status_code=500, detail=str(e))

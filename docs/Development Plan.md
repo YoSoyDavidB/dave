@@ -190,15 +190,67 @@ User Query
 
 ---
 
-## Phase 5: Proactive Features (Semanas 11-12)
+## Phase 5: Markdown Editor (Semanas 12-16)
 
-(No changes, remains as future work)
+> **Reference:** Plan detallado en `MARKDOWN_EDITOR_PLAN.md`
+
+### Goal
+Editor de markdown integrado que permite editar archivos de Obsidian directamente desde Dave con funcionalidades similares a Obsidian/Notion.
+
+### Sprint 5.1: MVP - Edición Básica (Semanas 12-13)
+**User Stories:**
+- US-001: Abrir archivo en modo edición
+- US-002: Guardar cambios en GitHub
+- US-003: Detectar cambios sin guardar
+
+**Key Features:**
+- Editor básico con Lexical
+- Guardar/descartar cambios
+- Indicadores de estado
+
+### Sprint 5.2: Formato y Preview (Semana 14)
+**User Stories:**
+- US-004: Atajos de teclado para formato
+- US-005: Barra de herramientas flotante
+- US-013: Vista previa en tiempo real
+
+**Key Features:**
+- Formatting toolbar
+- Split view (editor | preview)
+- Markdown shortcuts
+
+### Sprint 5.3: Funcionalidades Obsidian (Semana 15)
+**User Stories:**
+- US-007: Soporte para Wikilinks
+- US-008: Soporte para Tags
+
+**Key Features:**
+- Wikilinks con autocompletado
+- Tags con navegación
+- Obsidian syntax support
+
+### Sprint 5.4: Features Avanzados (Semana 16)
+**User Stories:**
+- US-011: Menú de comandos con /
+- US-018: Detección de conflictos
+- US-019: Auto-guardado
+
+**Key Features:**
+- Slash commands menu
+- Conflict resolution
+- Auto-save system
 
 ---
 
-## Phase 6: Polish & Deploy (Semanas 13-14)
+## Phase 6: Proactive Features (Semanas 17-18)
 
-(No changes, remains as future work)
+(Remains as future work)
+
+---
+
+## Phase 7: Polish & Deploy (Semanas 19-20)
+
+(Remains as future work)
 
 ---
 

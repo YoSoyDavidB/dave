@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   Folder,
   FileText,
@@ -9,6 +10,8 @@ import {
   RefreshCw,
   Calendar,
   X,
+  Edit3,
+  Plus,
 } from 'lucide-react'
 import {
   listVaultDirectory,
@@ -19,6 +22,7 @@ import {
   VaultFile,
 } from '../services/api'
 import MarkdownMessage from '../components/chat/MarkdownMessage'
+import CreateNoteModal from '../components/vault/CreateNoteModal'
 
 function BreadcrumbNav({
   path,
@@ -95,7 +99,12 @@ function FileViewer({
   file: VaultFile
   onClose: () => void
 }) {
+  const navigate = useNavigate()
   const fileName = file.path.split('/').pop() || 'Untitled'
+
+  const handleEdit = () => {
+    navigate(`/vault/editor?path=${encodeURIComponent(file.path)}`)
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -105,12 +114,21 @@ function FileViewer({
           <FileText size={18} className="text-[#F0FF3D]" />
           <span className="text-white font-medium truncate">{fileName}</span>
         </div>
-        <button
-          onClick={onClose}
-          className="p-1.5 rounded-lg hover:bg-[var(--bg-input)] text-zinc-400 hover:text-white transition-colors"
-        >
-          <X size={18} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleEdit}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#F0FF3D]/10 hover:bg-[#F0FF3D]/20 text-[#F0FF3D] transition-colors text-sm font-medium"
+          >
+            <Edit3 size={16} />
+            Edit
+          </button>
+          <button
+            onClick={onClose}
+            className="p-1.5 rounded-lg hover:bg-[var(--bg-input)] text-zinc-400 hover:text-white transition-colors"
+          >
+            <X size={18} />
+          </button>
+        </div>
       </div>
 
       {/* Content */}
@@ -164,6 +182,7 @@ function SearchResults({
 }
 
 export default function VaultBrowser() {
+  const navigate = useNavigate()
   const [currentPath, setCurrentPath] = useState('')
   const [items, setItems] = useState<VaultItem[]>([])
   const [selectedFile, setSelectedFile] = useState<VaultFile | null>(null)
@@ -173,6 +192,7 @@ export default function VaultBrowser() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<VaultItem[] | null>(null)
   const [isSearching, setIsSearching] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const loadDirectory = useCallback(async (path: string) => {
     setIsLoading(true)
@@ -285,6 +305,13 @@ export default function VaultBrowser() {
           {/* Quick actions */}
           <div className="flex gap-2 mt-3">
             <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[#F0FF3D]/10 text-[#F0FF3D] hover:bg-[#F0FF3D]/20 transition-colors text-sm font-medium"
+            >
+              <Plus size={14} />
+              New Note
+            </button>
+            <button
               onClick={loadDailyNote}
               className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-xl bg-[var(--bg-input)] text-zinc-400 hover:text-[#F0FF3D] hover:bg-[#F0FF3D]/10 transition-colors text-sm"
             >
@@ -368,6 +395,18 @@ export default function VaultBrowser() {
           </div>
         )}
       </div>
+
+      {/* Create Note Modal */}
+      <CreateNoteModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onNoteCreated={(path) => {
+          setShowCreateModal(false)
+          // Navigate to the newly created note in the editor
+          navigate(`/vault/editor?path=${encodeURIComponent(path)}`)
+        }}
+        initialPath={currentPath}
+      />
     </div>
   )
 }

@@ -3,8 +3,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { Bell, RefreshCw } from 'lucide-react';
-import { getPendingTasks, getActiveGoals, syncVaultTasks, type Task, type Goal } from '../../services/proactive';
+import { Bell, RefreshCw, Check } from 'lucide-react';
+import { getPendingTasks, getActiveGoals, syncVaultTasks, markTaskCompleted, type Task, type Goal } from '../../services/proactive';
 
 interface NotificationBellProps {
   className?: string;
@@ -54,6 +54,18 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
     } catch (error) {
       console.error('Failed to sync vault tasks:', error);
       setSyncing(false);
+    }
+  };
+
+  const handleCompleteTask = async (memoryId: string) => {
+    try {
+      await markTaskCompleted(memoryId);
+      // Remove task from local state immediately for responsive UI
+      setTasks(tasks.filter(t => t.memory_id !== memoryId));
+    } catch (error) {
+      console.error('Failed to mark task as completed:', error);
+      // Reload to get current state if failed
+      loadNotifications();
     }
   };
 
@@ -112,16 +124,25 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                       {tasks.map((task) => (
                         <div
                           key={task.memory_id}
-                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors flex items-start gap-3 group"
                         >
-                          <p className="text-sm text-gray-900 dark:text-white">
-                            {task.task_text}
-                          </p>
-                          {task.source && (
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {task.source.replace('vault:', '')}
+                          <div className="flex-1">
+                            <p className="text-sm text-gray-900 dark:text-white">
+                              {task.task_text}
                             </p>
-                          )}
+                            {task.source && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {task.source.replace('vault:', '')}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            onClick={() => handleCompleteTask(task.memory_id)}
+                            className="flex-shrink-0 p-1.5 rounded-full text-gray-400 hover:text-green-600 hover:bg-green-50 dark:hover:text-green-400 dark:hover:bg-green-900/20 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Mark as completed"
+                          >
+                            <Check className="w-4 h-4" />
+                          </button>
                         </div>
                       ))}
                     </div>

@@ -281,7 +281,7 @@ export async function login(credentials: LoginCredentials): Promise<User> {
     const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
     throw new Error(error.detail || 'Login failed')
   }
-  
+
   // After successful login, the cookie is set. We can then get the user data.
   return getMe()
 }
@@ -438,7 +438,7 @@ export async function updateVaultFile(
   path: string,
   content: string,
   sha: string
-): Promise<{ status: string; path: string }> {
+): Promise<{ status: string; path: string; sha: string }> {
   const response = await fetch(`${API_BASE_URL}/vault/file?path=${encodeURIComponent(path)}`, {
     ...defaultFetchOptions,
     method: 'PUT',
@@ -446,7 +446,8 @@ export async function updateVaultFile(
     body: JSON.stringify({ content, sha }),
   })
   if (!response.ok) {
-    throw new Error('Failed to update file')
+    const error = await response.json().catch(() => ({ detail: 'Failed to update file' }))
+    throw new Error(error.detail?.message || error.detail || 'Failed to update file')
   }
   return response.json()
 }

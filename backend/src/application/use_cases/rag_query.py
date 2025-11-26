@@ -5,6 +5,10 @@ from typing import Any
 
 import structlog
 
+from src.application.use_cases.graph_context_retrieval import (
+    GraphContext,
+    get_graph_context_retrieval,
+)
 from src.domain.entities.memory import Memory
 from src.infrastructure.vector_store.document_repository import (
     IndexedDocument,
@@ -41,6 +45,7 @@ class RAGContext:
     memories: list[Memory]
     documents: list[IndexedDocument]
     uploaded_docs: list[UploadedDocChunk]
+    graph_context: GraphContext | None
     formatted_context: str
     retrieval_stats: dict[str, Any]
 
@@ -80,6 +85,7 @@ class RAGQueryUseCase:
         self._memory_repo = get_memory_repository()
         self._doc_repo = get_document_repository()
         self._uploaded_doc_repo = get_uploaded_document_repository()
+        self._graph_retrieval = get_graph_context_retrieval()
         self._reranker = get_result_reranker()
 
         self._memory_weight = memory_weight
@@ -94,6 +100,7 @@ class RAGQueryUseCase:
         include_memories: bool = True,
         include_documents: bool = True,
         include_uploaded_docs: bool = True,
+        include_graph_context: bool = True,
         memory_limit: int = 5,
         document_limit: int = 5,
         uploaded_doc_limit: int = 5,
@@ -109,6 +116,7 @@ class RAGQueryUseCase:
             include_memories: Whether to search memories
             include_documents: Whether to search vault documents
             include_uploaded_docs: Whether to search uploaded documents
+            include_graph_context: Whether to include knowledge graph context
             memory_limit: Max memories to retrieve
             document_limit: Max vault documents to retrieve
             uploaded_doc_limit: Max uploaded document chunks to retrieve
@@ -122,6 +130,7 @@ class RAGQueryUseCase:
         memories: list[Memory] = []
         documents: list[IndexedDocument] = []
         uploaded_docs: list[UploadedDocChunk] = []
+        graph_context: GraphContext | None = None
         stats = {
             "query_length": len(query),
             "memories_searched": 0,
@@ -130,6 +139,8 @@ class RAGQueryUseCase:
             "memories_retrieved": 0,
             "documents_retrieved": 0,
             "uploaded_docs_retrieved": 0,
+            "graph_topics_retrieved": 0,
+            "graph_concepts_retrieved": 0,
             "rerank_strategy": rerank_strategy,
         }
 
@@ -193,6 +204,21 @@ class RAGQueryUseCase:
             except Exception as e:
                 logger.error("uploaded_doc_search_error", error=str(e))
 
+        # Retrieve graph context (topics, concepts)
+        if include_graph_context and user_id:
+            try:
+                graph_context = await self._graph_retrieval.get_context_for_query(
+                    user_id=user_id,
+                    query=query,
+                    max_topics=5,
+                    max_concepts=5,
+                )
+                stats["graph_topics_retrieved"] = len(graph_context.topics)
+                stats["graph_concepts_retrieved"] = len(graph_context.concepts)
+
+            except Exception as e:
+                logger.error("graph_context_retrieval_error", error=str(e))
+
         # Combine and rerank results
         combined_results = self._combine_results(
             memories=memories,
@@ -235,7 +261,7 @@ class RAGQueryUseCase:
         stats["uploaded_docs_retrieved"] = len(uploaded_docs)
 
         # Format context for LLM
-        formatted_context = self._format_context(memories, documents, uploaded_docs)
+        formatted_context = self._format_context(memories, documents, uploaded_docs, graph_context)
 
         logger.info(
             "rag_query_completed",
@@ -243,12 +269,15 @@ class RAGQueryUseCase:
             memories=len(memories),
             documents=len(documents),
             uploaded_docs=len(uploaded_docs),
+            graph_topics=stats.get("graph_topics_retrieved", 0),
+            graph_concepts=stats.get("graph_concepts_retrieved", 0),
         )
 
         return RAGContext(
             memories=memories,
             documents=documents,
             uploaded_docs=uploaded_docs,
+            graph_context=graph_context,
             formatted_context=formatted_context,
             retrieval_stats=stats,
         )
@@ -366,6 +395,7 @@ class RAGQueryUseCase:
         memories: list[Memory],
         documents: list[IndexedDocument],
         uploaded_docs: list[UploadedDocChunk],
+        graph_context: GraphContext | None = None,
     ) -> str:
         """Format retrieved context for LLM consumption.
 
@@ -373,11 +403,16 @@ class RAGQueryUseCase:
             memories: Retrieved memories
             documents: Retrieved vault documents
             uploaded_docs: Retrieved uploaded document chunks
+            graph_context: Graph context with topics and concepts
 
         Returns:
             Formatted context string
         """
         parts = []
+
+        # Add graph context first (topics/concepts the user has discussed)
+        if graph_context and graph_context.formatted_context:
+            parts.append(graph_context.formatted_context)
 
         # Format memories
         if memories:

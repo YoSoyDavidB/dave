@@ -139,6 +139,36 @@ def extract_sources_from_rag_context(result: RAGContext) -> list[SourceInfo]:
             )
         )
 
+    # Extract graph context sources (topics and concepts)
+    if result.graph_context:
+        # Add topics as sources
+        for topic in result.graph_context.topics:
+            topic_name = topic.get("name", "")
+            mentions = topic.get("mention_count", 0)
+            sources.append(
+                SourceInfo(
+                    type="topic",
+                    title=f"Topic: {topic_name}",
+                    snippet=f"Discussed {mentions} times in past conversations",
+                    score=1.0,  # Topics are always relevant when found
+                    metadata={"topic_name": topic_name, "mention_count": mentions},
+                )
+            )
+
+        # Add concepts as sources
+        for concept in result.graph_context.concepts:
+            concept_name = concept.get("name", "")
+            category = concept.get("category", "general")
+            sources.append(
+                SourceInfo(
+                    type="concept",
+                    title=f"Concept: {concept_name}",
+                    snippet=f"Category: {category}",
+                    score=1.0,
+                    metadata={"concept_name": concept_name, "category": category},
+                )
+            )
+
     return sources
 
 
