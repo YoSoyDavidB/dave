@@ -160,6 +160,7 @@ def test_update_file_success(client: TestClient) -> None:
     with patch("src.api.routes.vault.get_github_vault_client") as mock_get_client:
         mock_client = AsyncMock()
         mock_client.update_file.return_value = {"content": {"sha": "updated123"}}
+        mock_client.get_file.return_value = {"sha": "original123", "content": "# Original content"}
         mock_get_client.return_value = mock_client
 
         response = client.put(
