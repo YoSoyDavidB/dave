@@ -1,5 +1,5 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { $getSelection, $isRangeSelection, KEY_MODIFIER_COMMAND } from 'lexical'
 import { Sparkles, Loader2, X } from 'lucide-react'
 import { sendMessageStream } from '../../../services/api'
@@ -136,7 +136,7 @@ export default function AIAssistantPlugin({ conversationId, showButton = false }
     setMode('improve')
   }
 
-  const openAssistant = () => {
+  const openAssistant = useCallback(() => {
     editor.getEditorState().read(() => {
       const selection = $getSelection()
       if ($isRangeSelection(selection)) {
@@ -145,7 +145,7 @@ export default function AIAssistantPlugin({ conversationId, showButton = false }
         setShowModal(true)
       }
     })
-  }
+  }, [editor])
 
   // Listen for custom event from toolbar
   useEffect(() => {

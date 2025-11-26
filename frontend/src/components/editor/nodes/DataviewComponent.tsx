@@ -1,16 +1,13 @@
 import { Database, Code } from "lucide-react";
-import { NodeKey } from "lexical";
 import React from "react";
 import type { DataviewType } from "./DataviewNode";
 
 export default function DataviewComponent({
     query,
     dataviewType,
-    nodeKey,
 }: {
     query: string;
     dataviewType: DataviewType;
-    nodeKey: NodeKey;
 }) {
     const isJS = dataviewType === "dataviewjs";
 

@@ -1,12 +1,10 @@
-import { NodeKey } from "lexical";
+// import { NodeKey } from "lexical";
 import React from "react";
 
 export default function WikiLinkComponent({
     noteName,
-    nodeKey,
 }: {
     noteName: string;
-    nodeKey: NodeKey;
 }) {
     const handleClick = () => {
         window.dispatchEvent(
