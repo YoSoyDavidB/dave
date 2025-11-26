@@ -1,7 +1,5 @@
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
 import { useEffect } from 'react'
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext'
-import { useEffect } from 'react'
 import { TextNode } from 'lexical'
 import { $createWikiLinkNode } from '../nodes/WikiLinkNode'
 
