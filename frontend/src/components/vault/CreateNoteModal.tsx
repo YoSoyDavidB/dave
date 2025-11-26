@@ -96,7 +96,7 @@ export default function CreateNoteModal({
       await createVaultFile(notePath, content)
       onNoteCreated(notePath)
       onClose()
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to create note:', err)
       setError(err.message || 'Failed to create note')
     } finally {
@@ -153,11 +153,10 @@ export default function CreateNoteModal({
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setSelectedTemplate(null)}
-                  className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-                    selectedTemplate === null
+                  className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${selectedTemplate === null
                       ? 'bg-[#F0FF3D] text-black font-medium'
                       : 'bg-[var(--bg-input)] text-white hover:bg-[var(--bg-input)]/80'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center gap-2">
                     <FileText size={14} />
@@ -168,11 +167,10 @@ export default function CreateNoteModal({
                   <button
                     key={template.path}
                     onClick={() => setSelectedTemplate(template.path)}
-                    className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
-                      selectedTemplate === template.path
+                    className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${selectedTemplate === template.path
                         ? 'bg-[#F0FF3D] text-black font-medium'
                         : 'bg-[var(--bg-input)] text-white hover:bg-[var(--bg-input)]/80'
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center gap-2">
                       <FileText size={14} />

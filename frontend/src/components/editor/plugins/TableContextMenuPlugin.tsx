@@ -13,8 +13,6 @@ import {
   TableCellNode,
 } from '@lexical/table'
 import {
-  RowsIcon,
-  Columns3,
   Trash2,
   Plus,
 } from 'lucide-react'
