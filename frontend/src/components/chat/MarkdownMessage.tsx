@@ -2,22 +2,11 @@ import ReactMarkdown from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Copy, Check, Database, Code as CodeIcon } from 'lucide-react'
-import { useState, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { searchVault } from '../../services/api'
+import { useState } from 'react'
 
 interface MarkdownMessageProps {
   content: string
   isStreaming?: boolean
-}
-
-// Process wiki-links [[note]] into clickable links
-function processWikiLinks(content: string): string {
-  // Replace [[note]] with a special marker that we can detect later
-  return content.replace(/\[\[([^\]]+)\]\]/g, (match, noteName) => {
-    // Use a special format that markdown will render as a link
-    return `[📝 ${noteName}](wikilink://${noteName})`
-  })
 }
 
 // Custom code block with copy button
@@ -113,27 +102,6 @@ function CodeBlock({ language, children }: { language: string; children: string 
 }
 
 export default function MarkdownMessage({ content, isStreaming }: MarkdownMessageProps) {
-  const navigate = useNavigate()
-
-  // Process wiki-links in the content
-  const processedContent = useMemo(() => processWikiLinks(content), [content])
-
-  const handleWikiLinkClick = async (noteName: string, e: React.MouseEvent) => {
-    e.preventDefault()
-
-    try {
-      const results = await searchVault(noteName)
-      if (results.length > 0) {
-        navigate(`/vault/editor?path=${encodeURIComponent(results[0].path)}`)
-      } else {
-        alert(`Note "${noteName}" not found`)
-      }
-    } catch (err) {
-      console.error('Failed to find note:', err)
-      alert(`Failed to find note "${noteName}"`)
-    }
-  }
-
   return (
     <div className="text-sm leading-relaxed">
       <ReactMarkdown
@@ -195,22 +163,6 @@ export default function MarkdownMessage({ content, isStreaming }: MarkdownMessag
 
           // Links
           a({ href, children }) {
-            // Check if this is a wiki-link
-            const isWikiLink = href?.startsWith('wikilink://')
-
-            if (isWikiLink) {
-              const noteName = href.replace('wikilink://', '')
-              return (
-                <span
-                  onClick={(e) => handleWikiLinkClick(noteName, e)}
-                  className="text-[#F0FF3D] hover:text-[#F0FF3D]/80 cursor-pointer hover:underline"
-                  title={`Open ${noteName}`}
-                >
-                  {children}
-                </span>
-              )
-            }
-
             return (
               <a
                 href={href}
@@ -249,7 +201,7 @@ export default function MarkdownMessage({ content, isStreaming }: MarkdownMessag
           },
         }}
       >
-        {processedContent}
+        {content}
       </ReactMarkdown>
 
       {/* Streaming cursor */}

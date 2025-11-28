@@ -6,7 +6,6 @@ import {
   Settings,
   Home,
   BookOpen,
-  Folder,
   LogOut,
   Database,
   Menu,
@@ -32,7 +31,6 @@ export default function Layout() {
     { path: '/', icon: Home, label: 'Chat' },
     { path: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/learn', icon: BookOpen, label: 'English' },
-    { path: '/vault', icon: Folder, label: 'Vault' },
     { path: '/knowledge', icon: Database, label: 'Knowledge Base' },
   ]
 
@@ -211,12 +209,6 @@ export default function Layout() {
               >
                 <span className="hidden sm:inline">English</span>
                 <span className="sm:hidden">Learn</span>
-              </Link>
-              <Link
-                to="/vault"
-                className={`nav-pill whitespace-nowrap ${location.pathname === '/vault' ? 'active' : ''}`}
-              >
-                Vault
               </Link>
               <Link
                 to="/dashboard"

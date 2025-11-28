@@ -12,7 +12,6 @@ from src.api.routes import (
     health,
     proactive,
     rag,
-    vault,
 )
 from src.config import get_settings
 from src.infrastructure.database import init_db
@@ -102,7 +101,8 @@ def create_app() -> FastAPI:
     app.include_router(health.router, prefix=settings.api_prefix)
     app.include_router(chat.router, prefix=settings.api_prefix)
     app.include_router(conversations.router, prefix=settings.api_prefix)
-    app.include_router(vault.router, prefix=settings.api_prefix)
+    # Vault routes removed - vault is now only used internally via agent tools
+    # app.include_router(vault.router, prefix=settings.api_prefix)
     app.include_router(auth.router, prefix=settings.api_prefix)
     app.include_router(english.router, prefix=settings.api_prefix)
     app.include_router(rag.router, prefix=settings.api_prefix)
