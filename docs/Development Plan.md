@@ -62,7 +62,9 @@ status: active
 
 ---
 
-## 🚧 Phase 4: Smart Dave - Memory & RAG (Semanas 9-11) - IN PROGRESS
+## ✅ Phase 4: Smart Dave - Memory & RAG (Semanas 9-11) - COMPLETE
+
+> **Status Update (Dec 3, 2025):** Phase 4 is COMPLETE. Sistema de memoria, RAG pipeline, y features proactivas implementadas y funcionando.
 
 > **Reference:** Arquitectura inspirada en proyecto AION (`/Users/davidbuitrago/Documents/AION`)
 
@@ -190,65 +192,24 @@ User Query
 
 ---
 
-## Phase 5: Markdown Editor (Semanas 12-16)
+## ~~Phase 5: Markdown Editor~~ (CANCELLED)
 
-> **Reference:** Plan detallado en `MARKDOWN_EDITOR_PLAN.md`
+> **Decision (Nov 28, 2025):** El Markdown Editor ha sido eliminado del roadmap. El vault de Obsidian ahora funciona exclusivamente como fuente de conocimiento interna para Dave, sin interfaz de edición. Los usuarios pueden acceder al vault solo a través de las herramientas del agente (read_note, search_vault, etc.) durante las conversaciones.
 
-### Goal
-Editor de markdown integrado que permite editar archivos de Obsidian directamente desde Dave con funcionalidades similares a Obsidian/Notion.
-
-### Sprint 5.1: MVP - Edición Básica (Semanas 12-13)
-**User Stories:**
-- US-001: Abrir archivo en modo edición
-- US-002: Guardar cambios en GitHub
-- US-003: Detectar cambios sin guardar
-
-**Key Features:**
-- Editor básico con Lexical
-- Guardar/descartar cambios
-- Indicadores de estado
-
-### Sprint 5.2: Formato y Preview (Semana 14)
-**User Stories:**
-- US-004: Atajos de teclado para formato
-- US-005: Barra de herramientas flotante
-- US-013: Vista previa en tiempo real
-
-**Key Features:**
-- Formatting toolbar
-- Split view (editor | preview)
-- Markdown shortcuts
-
-### Sprint 5.3: Funcionalidades Obsidian (Semana 15)
-**User Stories:**
-- US-007: Soporte para Wikilinks
-- US-008: Soporte para Tags
-
-**Key Features:**
-- Wikilinks con autocompletado
-- Tags con navegación
-- Obsidian syntax support
-
-### Sprint 5.4: Features Avanzados (Semana 16)
-**User Stories:**
-- US-011: Menú de comandos con /
-- US-018: Detección de conflictos
-- US-019: Auto-guardado
-
-**Key Features:**
-- Slash commands menu
-- Conflict resolution
-- Auto-save system
+**Rationale:**
+- El vault se usa internamente para RAG y knowledge base
+- Obsidian permanece como la herramienta principal para editar notas
+- Dave accede al vault a través de GitHub API solo para lectura/escritura programática
 
 ---
 
-## Phase 6: Proactive Features (Semanas 17-18)
+## Phase 5: Proactive Features (Semanas 12-13)
 
 (Remains as future work)
 
 ---
 
-## Phase 7: Polish & Deploy (Semanas 19-20)
+## Phase 6: Polish & Deploy (Semanas 14-15)
 
 (Remains as future work)
 
@@ -278,17 +239,22 @@ Editor de markdown integrado que permite editar archivos de Obsidian directament
 - [x] Protected routes
 - [x] Auth UI matching app design
 
-### ➡️ 🏁 M4: Smart Dave (Weeks 9-11)
-- [ ] Qdrant + Embedding service configurados
-- [ ] Sistema de memoria a largo plazo
-  - [ ] Extracción automática de preferencias/hechos
-  - [ ] Búsqueda semántica de memorias
-  - [ ] Decay y consolidación de memorias
-- [ ] RAG Pipeline
-  - [ ] Vault indexado y chunkeado
-  - [ ] Búsqueda semántica sobre vault
-  - [ ] Context assembly con sources
-- [ ] UI muestra fuentes usadas
+### ✅ 🏁 M4: Smart Dave (Weeks 9-11)
+- [x] Qdrant + Embedding service configurados
+- [x] Sistema de memoria a largo plazo
+  - [x] Extracción automática de preferencias/hechos
+  - [x] Búsqueda semántica de memorias
+  - [x] Decay y consolidación de memorias
+- [x] RAG Pipeline
+  - [x] Vault indexado y chunkeado
+  - [x] Búsqueda semántica sobre vault
+  - [x] Context assembly con sources
+- [x] UI muestra fuentes usadas
+- [x] **Proactive Features Added:**
+  - [x] Task reminders with notifications bell
+  - [x] Goal tracking with progress slider
+  - [x] Automatic task completion sync from vault
+  - [x] Vault documents visualization in Knowledge Base
 
 ### 🏁 M5: MVP Complete (Week 14)
 - [ ] Proactive reminders
@@ -319,9 +285,10 @@ Editor de markdown integrado que permite editar archivos de Obsidian directament
   - `openrouter.py` - Cliente LLM
 
 ### Frontend (React + TypeScript)
-- **Pages**: Chat (`/`), EnglishProgress (`/learn`), VaultBrowser (`/vault`), Dashboard (`/dashboard`), Login, Register
+- **Pages**: Chat (`/`), EnglishProgress (`/learn`), KnowledgeBase (`/knowledge`), Dashboard (`/dashboard`), Login, Register
 - **Stores**: `chatStore.ts`, `authStore.ts` (Zustand)
 - **Design System**: Ver `UI-Guidelines.md`
+- **Note**: Vault UI removed - vault is now internal-only via agent tools
 
 ### Docker Services
 - `backend` - FastAPI (puerto 8000)

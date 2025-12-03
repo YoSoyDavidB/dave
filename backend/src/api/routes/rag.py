@@ -291,3 +291,67 @@ async def get_memory_stats(user_id: str) -> dict[str, Any]:
     except Exception as e:
         logger.error("get_memory_stats_failed", error=str(e))
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ============================================
+# VAULT DOCUMENTS ENDPOINTS
+# ============================================
+
+
+class VaultDocument(BaseModel):
+    """A vault document in the index."""
+
+    path: str
+    title: str
+    chunk_count: int
+    last_modified: str | None = None
+
+
+class VaultDocumentListResponse(BaseModel):
+    """Response for vault document list."""
+
+    documents: list[VaultDocument]
+    total: int
+
+
+@router.get("/vault/documents", response_model=VaultDocumentListResponse)
+async def get_indexed_vault_documents() -> VaultDocumentListResponse:
+    """Get all indexed vault documents with their metadata."""
+    try:
+        from src.infrastructure.vector_store.document_repository import (
+            get_document_repository,
+        )
+
+        doc_repo = get_document_repository()
+
+        # Get all indexed paths
+        paths = await doc_repo.get_indexed_paths()
+
+        # Get metadata for each document
+        documents = []
+        for path in paths:
+            chunks = await doc_repo.get_document_chunks(path)
+            if chunks:
+                # Extract title from path
+                title = path.split("/")[-1].replace(".md", "")
+
+                documents.append(
+                    VaultDocument(
+                        path=path,
+                        title=title,
+                        chunk_count=len(chunks),
+                        last_modified=chunks[0].last_modified.isoformat() if chunks else None,
+                    )
+                )
+
+        # Sort by path
+        documents.sort(key=lambda d: d.path)
+
+        return VaultDocumentListResponse(
+            documents=documents,
+            total=len(documents),
+        )
+
+    except Exception as e:
+        logger.error("get_vault_documents_failed", error=str(e))
+        raise HTTPException(status_code=500, detail=str(e))

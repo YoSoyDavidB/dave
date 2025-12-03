@@ -2,7 +2,7 @@
 
 import hashlib
 import uuid
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -272,7 +272,7 @@ class UploadedDocumentRepository:
         if description is not None:
             doc.description = description
 
-        doc.updated_at = datetime.utcnow()
+        doc.updated_at = datetime.now(UTC)
 
         # Update metadata
         dummy_embedding = [0.0] * 1536

@@ -5,9 +5,11 @@ Your AI friend for productivity and English learning.
 ## Features
 
 - 💬 Natural conversation with a friendly AI
-- 📝 Obsidian vault integration (PARA method)
+- 🧠 RAG-powered knowledge base (Qdrant + Neo4j)
+- 📝 Obsidian vault as internal knowledge source
 - 🇬🇧 English correction and learning
 - 📊 Progress tracking dashboard
+- 🔔 Proactive notifications and task management
 
 ## Tech Stack
 

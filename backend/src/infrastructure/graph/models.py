@@ -1,6 +1,6 @@
 """Graph models for Neo4j knowledge graph."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 from uuid import UUID
@@ -92,7 +92,7 @@ class TopicNode(GraphNode):
         last_mentioned: datetime | None = None,
         mention_count: int = 1,
     ):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         super().__init__(
             node_id=f"{user_id}:{name}",
             labels=["Topic"],
@@ -124,7 +124,7 @@ class ConceptNode(GraphNode):
                 "name": name,
                 "category": category,
                 "description": description,
-                "first_seen": (first_seen or datetime.utcnow()).isoformat(),
+                "first_seen": (first_seen or datetime.now(UTC)).isoformat(),
             },
         )
 
@@ -183,7 +183,7 @@ class MemoryGraph(BaseModel):
                 properties={
                     "strength": strength,
                     "reason": reason,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             )
         )
@@ -208,7 +208,7 @@ class MemoryGraph(BaseModel):
                 rel_type=RelationType.DISCUSSES,
                 properties={
                     "relevance": relevance,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             )
         )
@@ -234,7 +234,7 @@ class MemoryGraph(BaseModel):
                 rel_type=RelationType.MENTIONS,
                 properties={
                     "sentiment": sentiment,
-                    "created_at": datetime.utcnow().isoformat(),
+                    "created_at": datetime.now(UTC).isoformat(),
                 },
             )
         )

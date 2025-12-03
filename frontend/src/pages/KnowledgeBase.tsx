@@ -10,12 +10,14 @@ import {
   uploadDocument,
   deleteDocument,
   getDocumentStats,
+  getIndexedVaultDocuments,
   RAGIndexStats,
   RAGSearchResult,
   Memory,
   UploadedDocument,
   DocumentCategory,
   DocumentStatsResponse,
+  VaultDocument,
 } from '../services/api'
 import { useAuthStore } from '../stores/authStore'
 import {
@@ -65,6 +67,10 @@ export default function KnowledgeBase() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // Vault documents state
+  const [vaultDocuments, setVaultDocuments] = useState<VaultDocument[]>([])
+  const [loadingVaultDocs, setLoadingVaultDocs] = useState(false)
+
   // Memory state
   const [memories, setMemories] = useState<Memory[]>([])
   const [loadingMemories, setLoadingMemories] = useState(false)
@@ -88,6 +94,7 @@ export default function KnowledgeBase() {
   useEffect(() => {
     if (activeTab === 'vault') {
       loadStats()
+      loadVaultDocuments()
     }
   }, [activeTab])
 
@@ -223,6 +230,19 @@ export default function KnowledgeBase() {
       console.error(err)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadVaultDocuments = async () => {
+    try {
+      setLoadingVaultDocs(true)
+      const data = await getIndexedVaultDocuments()
+      setVaultDocuments(data.documents)
+    } catch (err) {
+      console.error('Failed to load vault documents:', err)
+      setError('Failed to load vault documents')
+    } finally {
+      setLoadingVaultDocs(false)
     }
   }
 
@@ -745,6 +765,71 @@ export default function KnowledgeBase() {
                   <p className="text-zinc-600 text-sm mt-1">
                     Try a different query or lower the score threshold
                   </p>
+                </div>
+              )}
+            </div>
+
+            {/* Indexed Documents List */}
+            <div className="glass-card p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-semibold text-white">Indexed Documents</h2>
+                <button
+                  onClick={loadVaultDocuments}
+                  disabled={loadingVaultDocs}
+                  className="p-2 rounded-xl hover:bg-[#F0FF3D]/5 transition-all duration-200 text-zinc-400 hover:text-[#F0FF3D]"
+                >
+                  <RefreshCw size={18} className={loadingVaultDocs ? 'animate-spin' : ''} />
+                </button>
+              </div>
+
+              {loadingVaultDocs ? (
+                <div className="flex items-center justify-center py-12">
+                  <Loader2 size={32} className="animate-spin text-[#F0FF3D]" />
+                </div>
+              ) : vaultDocuments.length === 0 ? (
+                <div className="text-center py-12">
+                  <Database size={32} className="mx-auto text-zinc-600 mb-3" />
+                  <p className="text-zinc-500">No documents indexed yet</p>
+                  <p className="text-zinc-600 text-sm mt-1">
+                    Click "Incremental Index" or "Full Reindex" above to index your vault
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <div className="text-sm text-zinc-500 mb-3">
+                    {vaultDocuments.length} documents • {vaultDocuments.reduce((sum, doc) => sum + doc.chunk_count, 0)} total chunks
+                  </div>
+                  <div className="max-h-96 overflow-y-auto space-y-2">
+                    {vaultDocuments.map((doc) => (
+                      <div
+                        key={doc.path}
+                        className="p-4 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.04] transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <File size={16} className="text-[#F0FF3D] flex-shrink-0" />
+                              <span className="font-medium text-white truncate">
+                                {doc.title}
+                              </span>
+                            </div>
+                            <p className="text-xs text-zinc-500 ml-6 truncate">
+                              {doc.path}
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-zinc-500 ml-6 mt-1">
+                              <span>{doc.chunk_count} chunks</span>
+                              {doc.last_modified && (
+                                <>
+                                  <span className="text-zinc-600">•</span>
+                                  <span>{new Date(doc.last_modified).toLocaleDateString()}</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

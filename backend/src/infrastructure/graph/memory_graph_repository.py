@@ -1,6 +1,6 @@
 """Repository for managing memory knowledge graph in Neo4j."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
@@ -159,7 +159,7 @@ class MemoryGraphRepository:
                 "user_id": user_id,
                 "topic_name": topic_name,
                 "relevance": relevance,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             },
         )
         logger.info("memory_topic_linked", memory_id=str(memory_id), topic=topic_name)
@@ -197,7 +197,7 @@ class MemoryGraphRepository:
                 "memory_id": str(memory_id),
                 "concept_name": concept_name,
                 "sentiment": sentiment,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             },
         )
         logger.info(
@@ -240,7 +240,7 @@ class MemoryGraphRepository:
                 "to_id": str(to_memory_id),
                 "strength": strength,
                 "reason": reason,
-                "created_at": datetime.utcnow().isoformat(),
+                "created_at": datetime.now(UTC).isoformat(),
             },
         )
         logger.info(

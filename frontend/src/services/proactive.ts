@@ -107,3 +107,19 @@ export async function syncVaultTasks(): Promise<void> {
     throw new Error('Failed to sync vault tasks');
   }
 }
+
+/**
+ * Update a goal's progress percentage
+ */
+export async function updateGoalProgress(goalId: string, progress: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/proactive/goals/${goalId}/progress`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ progress }),
+  });
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }));
+    throw new Error(error.detail || 'Failed to update goal progress');
+  }
+}

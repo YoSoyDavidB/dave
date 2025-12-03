@@ -171,6 +171,73 @@ class ProactiveService:
             logger.error("get_pending_tasks_failed", user_id=user_id, error=str(e))
             return []
 
+    async def update_goal_progress(self, memory_id: str, user_id: str, progress: float) -> bool:
+        """Update a goal's progress percentage.
+
+        Args:
+            memory_id: Memory ID of the goal
+            user_id: User who owns the goal
+            progress: New progress percentage (0-100)
+
+        Returns:
+            True if goal was updated successfully
+        """
+        try:
+            # Validate progress range
+            if not 0.0 <= progress <= 100.0:
+                logger.warning(
+                    "invalid_progress_value",
+                    memory_id=memory_id,
+                    progress=progress,
+                )
+                return False
+
+            # Get the memory
+            memory = await self._memory_repo.get_by_id(memory_id)
+            if not memory or memory.user_id != user_id:
+                return False
+
+            # Verify it's a GOAL type
+            if memory.memory_type != MemoryType.GOAL:
+                logger.warning(
+                    "not_a_goal",
+                    memory_id=memory_id,
+                    type=memory.memory_type.value,
+                )
+                return False
+
+            # Update progress
+            old_progress = memory.progress
+            memory.progress = progress
+
+            # Mark as referenced (keeps it fresh)
+            memory.mark_referenced()
+
+            # Boost relevance if significant progress was made
+            if progress - old_progress >= 10.0:
+                memory.boost_relevance(0.1)
+
+            # Update in database
+            await self._memory_repo.update(memory)
+
+            logger.info(
+                "goal_progress_updated",
+                memory_id=memory_id,
+                user_id=user_id,
+                old_progress=old_progress,
+                new_progress=progress,
+            )
+
+            return True
+
+        except Exception as e:
+            logger.error(
+                "update_goal_progress_failed",
+                memory_id=memory_id,
+                error=str(e),
+            )
+            return False
+
 
 # Singleton instance
 _proactive_service: ProactiveService | None = None

@@ -1,7 +1,7 @@
 """Vault indexing use case - indexes Obsidian vault for RAG."""
 
 import hashlib
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -112,7 +112,7 @@ class VaultIndexingUseCase:
                     chunks = await self._doc_repo.index_document(
                         path=path,
                         content=content,
-                        last_modified=datetime.utcnow(),
+                        last_modified=datetime.now(UTC),
                     )
 
                     stats["indexed"] += 1
@@ -202,7 +202,7 @@ class VaultIndexingUseCase:
                     await self._doc_repo.index_document(
                         path=path,
                         content=content,
-                        last_modified=datetime.utcnow(),
+                        last_modified=datetime.now(UTC),
                     )
 
                     self._indexed_hashes[path] = content_hash
@@ -254,7 +254,7 @@ class VaultIndexingUseCase:
         chunks = await self._doc_repo.index_document(
             path=path,
             content=content,
-            last_modified=datetime.utcnow(),
+            last_modified=datetime.now(UTC),
         )
 
         self._indexed_hashes[path] = compute_content_hash(content)

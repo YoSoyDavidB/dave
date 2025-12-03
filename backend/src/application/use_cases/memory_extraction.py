@@ -144,6 +144,9 @@ class MemoryExtractionUseCase:
         # Check for duplicates before storing
         memories = await self._filter_duplicates(memories, user_id)
 
+        # Check if any goals are updates to existing goals
+        await self._update_existing_goal_progress(memories, user_id)
+
         if not memories:
             logger.debug("all_memories_were_duplicates", conversation_id=conversation_id)
             return []
@@ -224,6 +227,63 @@ class MemoryExtractionUseCase:
         except Exception as e:
             logger.error("memory_extraction_failed", error=str(e))
             return []
+
+    async def _update_existing_goal_progress(
+        self,
+        memories: list[Memory],
+        user_id: str,
+    ) -> None:
+        """Check if any new goal memories are updates to existing goals.
+
+        If a goal with progress is mentioned and matches an existing goal,
+        update the existing goal's progress instead of creating a duplicate.
+
+        Args:
+            memories: New memories extracted (may be modified)
+            user_id: User ID
+        """
+        goals_to_remove = []
+
+        for i, memory in enumerate(memories):
+            # Only check GOAL type memories with progress
+            if memory.memory_type != MemoryType.GOAL:
+                continue
+
+            # Only if progress was explicitly mentioned (> 0)
+            if memory.progress <= 0:
+                continue
+
+            # Search for similar existing goals
+            similar_goals = await self._memory_repo.search_similar(
+                query=memory.short_text,
+                user_id=user_id,
+                limit=1,
+                min_score=0.75,  # Slightly lower threshold for goal matching
+                memory_types=[MemoryType.GOAL],
+            )
+
+            if similar_goals:
+                existing_goal, score = similar_goals[0]
+
+                # Update the existing goal's progress
+                existing_goal.progress = memory.progress
+                existing_goal.mark_referenced()
+                await self._memory_repo.update(existing_goal)
+
+                logger.info(
+                    "goal_progress_auto_updated",
+                    goal_text=existing_goal.short_text[:50],
+                    old_progress=existing_goal.progress,
+                    new_progress=memory.progress,
+                    similarity=score,
+                )
+
+                # Mark this memory for removal (don't create duplicate)
+                goals_to_remove.append(i)
+
+        # Remove goals that were updates (in reverse to maintain indices)
+        for i in reversed(goals_to_remove):
+            memories.pop(i)
 
     async def _filter_duplicates(
         self,

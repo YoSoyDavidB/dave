@@ -1,6 +1,6 @@
 """Tests for RAG system components."""
 
-from datetime import datetime
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -207,21 +207,21 @@ class TestRecencyScore:
 
     def test_very_recent(self):
         # Today's date should get score close to 1.0
-        score = recency_score(datetime.utcnow())
+        score = recency_score(datetime.now(UTC))
         assert score == 1.0
 
     def test_old_content(self):
         # Very old content should get score 0.0
         from datetime import timedelta
 
-        old_date = datetime.utcnow() - timedelta(days=400)
+        old_date = datetime.now(UTC) - timedelta(days=400)
         score = recency_score(old_date, max_age_days=365)
         assert score == 0.0
 
     def test_mid_age(self):
         from datetime import timedelta
 
-        mid_date = datetime.utcnow() - timedelta(days=180)
+        mid_date = datetime.now(UTC) - timedelta(days=180)
         score = recency_score(mid_date, max_age_days=365)
         assert 0.4 < score < 0.6
 
@@ -285,7 +285,7 @@ class TestResultReranker:
         class FakeResult:
             score = 0.7
             content = "machine learning tutorial"
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(UTC)
 
         results = [FakeResult()]
         reranked = reranker.rerank(results, "machine learning", strategy="hybrid")
@@ -307,7 +307,7 @@ class TestIndexedDocument:
             "chunk_index": 0,
             "title": "Test File",
             "heading": "## Section",
-            "last_modified": datetime.utcnow().isoformat(),
+            "last_modified": datetime.now(UTC).isoformat(),
         }
 
         doc = IndexedDocument.from_payload("chunk_001", payload, score=0.85)
@@ -389,8 +389,8 @@ class TestRAGQueryUseCase:
             user_id="user123",
             short_text="User prefers dark mode",
             memory_type=MemoryType.PREFERENCE,
-            timestamp=datetime.utcnow(),
-            last_referenced_at=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
+            last_referenced_at=datetime.now(UTC),
             relevance_score=0.8,
             num_times_referenced=1,
             source="conversation",
@@ -407,7 +407,7 @@ class TestRAGQueryUseCase:
             chunk_index=0,
             title="Project Notes",
             heading="## Setup",
-            last_modified=datetime.utcnow(),
+            last_modified=datetime.now(UTC),
             score=0.75,
         )
 

@@ -3,7 +3,7 @@
 import hashlib
 import uuid
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import structlog
@@ -45,7 +45,7 @@ class IndexedDocument:
             title=payload.get("title", ""),
             heading=payload.get("heading", ""),
             last_modified=datetime.fromisoformat(
-                payload.get("last_modified", datetime.utcnow().isoformat())
+                payload.get("last_modified", datetime.now(UTC).isoformat())
             ),
             score=score,
         )
@@ -88,7 +88,7 @@ class DocumentRepository:
             title = path.split("/")[-1].replace(".md", "")
 
         if last_modified is None:
-            last_modified = datetime.utcnow()
+            last_modified = datetime.now(UTC)
 
         # Delete existing chunks for this document
         await self.delete_by_path(path)

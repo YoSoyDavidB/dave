@@ -1,6 +1,6 @@
 """Memory entity for long-term user memory storage."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 from uuid import UUID, uuid4
@@ -30,8 +30,8 @@ class Memory(BaseModel):
     user_id: str
     short_text: str = Field(max_length=500)
     memory_type: MemoryType
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
-    last_referenced_at: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    last_referenced_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     relevance_score: float = Field(default=1.0, ge=0.0, le=1.0)
     num_times_referenced: int = Field(default=0, ge=0)
     source: str = ""  # conversation_id or file path
@@ -52,7 +52,7 @@ class Memory(BaseModel):
     def mark_referenced(self) -> None:
         """Mark this memory as referenced, updating counters."""
         self.num_times_referenced += 1
-        self.last_referenced_at = datetime.utcnow()
+        self.last_referenced_at = datetime.now(UTC)
 
     def decay_relevance(self, decay_factor: float = 0.95) -> None:
         """Apply decay to relevance score.
@@ -79,7 +79,7 @@ class Memory(BaseModel):
         Returns:
             True if memory is stale
         """
-        threshold = datetime.utcnow() - timedelta(days=days_threshold)
+        threshold = datetime.now(UTC) - timedelta(days=days_threshold)
         return self.last_referenced_at < threshold
 
     def should_consolidate(self) -> bool:
@@ -121,7 +121,7 @@ class Memory(BaseModel):
         if not self.due_date:
             return False
 
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         time_until_due = self.due_date - now
 
         # Remind if due within 24 hours or overdue

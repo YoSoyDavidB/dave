@@ -52,6 +52,12 @@ class MarkCompletedRequest(BaseModel):
     memory_id: str
 
 
+class UpdateProgressRequest(BaseModel):
+    """Request to update goal progress."""
+
+    progress: float
+
+
 @router.get("/reminders")
 async def get_reminders(
     current_user: User = Depends(get_current_user),
@@ -195,6 +201,53 @@ async def get_pending_tasks(
     except Exception as e:
         logger.error("get_tasks_failed", user_id=current_user.id, error=str(e))
         raise HTTPException(status_code=500, detail="Failed to get tasks")
+
+
+@router.post("/goals/{goal_id}/progress")
+async def update_goal_progress(
+    goal_id: str,
+    request: UpdateProgressRequest,
+    current_user: User = Depends(get_current_user),
+) -> dict[str, Any]:
+    """Update a goal's progress percentage.
+
+    Args:
+        goal_id: Memory ID of the goal
+        request: Request with new progress value (0-100)
+        current_user: Current authenticated user
+
+    Returns:
+        Success status with updated progress
+    """
+    try:
+        proactive = get_proactive_service()
+        success = await proactive.update_goal_progress(
+            goal_id,
+            current_user.id,
+            request.progress,
+        )
+
+        if not success:
+            raise HTTPException(
+                status_code=404,
+                detail="Goal not found or not owned by user",
+            )
+
+        return {
+            "success": True,
+            "message": f"Goal progress updated to {request.progress}%",
+            "progress": request.progress,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(
+            "update_goal_progress_failed",
+            goal_id=goal_id,
+            error=str(e),
+        )
+        raise HTTPException(status_code=500, detail="Failed to update goal progress")
 
 
 @router.post("/sync-vault-tasks")

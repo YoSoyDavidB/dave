@@ -1,7 +1,7 @@
 """Service for managing chat conversations."""
 
 import json
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -66,7 +66,7 @@ async def get_conversations_grouped() -> dict[str, list[dict[str, Any]]]:
             )
             conversations = list(result.scalars().all())
 
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             today = now.date()
             yesterday = today - timedelta(days=1)
             week_ago = today - timedelta(days=7)
@@ -126,7 +126,7 @@ async def add_message(
             await session.execute(
                 update(Conversation)
                 .where(Conversation.id == conversation_id)
-                .values(updated_at=datetime.utcnow())
+                .values(updated_at=datetime.now(UTC))
             )
 
             await session.commit()

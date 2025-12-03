@@ -1,6 +1,6 @@
 """Tests for the memory system."""
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
@@ -109,7 +109,7 @@ class TestMemoryEntity:
             user_id="user-123",
             short_text="Old memory",
             memory_type=MemoryType.FACT,
-            last_referenced_at=datetime.utcnow() - timedelta(days=100),
+            last_referenced_at=datetime.now(UTC) - timedelta(days=100),
         )
         assert old.is_stale(90) is True
 

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import APIRouter
 from pydantic import BaseModel
@@ -26,7 +26,7 @@ class DetailedHealthResponse(BaseModel):
 @router.get("/health", response_model=HealthResponse)
 async def health_check() -> HealthResponse:
     """Basic health check endpoint."""
-    return HealthResponse(status="healthy", timestamp=datetime.utcnow(), version="0.1.0")
+    return HealthResponse(status="healthy", timestamp=datetime.now(UTC), version="0.1.0")
 
 
 @router.get("/health/detailed", response_model=DetailedHealthResponse)
@@ -37,7 +37,7 @@ async def detailed_health_check() -> DetailedHealthResponse:
     """
     return DetailedHealthResponse(
         status="healthy",
-        timestamp=datetime.utcnow(),
+        timestamp=datetime.now(UTC),
         version="0.1.0",
         services={
             "llm": {"status": "not_configured"},

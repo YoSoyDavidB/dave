@@ -2,7 +2,7 @@
 
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Protocol
 
 # Stop words to ignore in keyword matching
@@ -163,7 +163,7 @@ def recency_score(timestamp: datetime, max_age_days: int = 365) -> float:
     Returns:
         Recency score (0-1, 1 being most recent)
     """
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     age = (now - timestamp).days
 
     if age <= 0:
@@ -329,7 +329,7 @@ class ResultReranker:
             # Try to get timestamp
             timestamp = getattr(result, "last_modified", None)
             if timestamp is None:
-                timestamp = getattr(result, "timestamp", datetime.utcnow())
+                timestamp = getattr(result, "timestamp", datetime.now(UTC))
 
             rec_score = recency_score(timestamp, max_age_days)
             boost = rec_score * recency_weight
@@ -369,7 +369,7 @@ class ResultReranker:
             # Recency boost
             timestamp = getattr(result, "last_modified", None)
             if timestamp is None:
-                timestamp = getattr(result, "timestamp", datetime.utcnow())
+                timestamp = getattr(result, "timestamp", datetime.now(UTC))
 
             rec_score = recency_score(timestamp, max_age_days)
             rec_boost = rec_score * recency_weight

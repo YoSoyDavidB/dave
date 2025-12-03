@@ -4,7 +4,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, RefreshCw, Check } from 'lucide-react';
-import { getPendingTasks, getActiveGoals, syncVaultTasks, markTaskCompleted, type Task, type Goal } from '../../services/proactive';
+import { getPendingTasks, getActiveGoals, syncVaultTasks, markTaskCompleted, updateGoalProgress, type Task, type Goal } from '../../services/proactive';
 
 interface NotificationBellProps {
   className?: string;
@@ -64,6 +64,20 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
       setTasks(tasks.filter(t => t.memory_id !== memoryId));
     } catch (error) {
       console.error('Failed to mark task as completed:', error);
+      // Reload to get current state if failed
+      loadNotifications();
+    }
+  };
+
+  const handleUpdateGoalProgress = async (goalId: string, newProgress: number) => {
+    try {
+      await updateGoalProgress(goalId, newProgress);
+      // Update local state immediately for responsive UI
+      setGoals(goals.map(g =>
+        g.memory_id === goalId ? { ...g, progress: newProgress } : g
+      ));
+    } catch (error) {
+      console.error('Failed to update goal progress:', error);
       // Reload to get current state if failed
       loadNotifications();
     }
@@ -163,13 +177,19 @@ export default function NotificationBell({ className = '' }: NotificationBellPro
                             {goal.goal_text}
                           </p>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                              <div
-                                className="bg-blue-500 h-2 rounded-full transition-all"
-                                style={{ width: `${goal.progress}%` }}
-                              />
-                            </div>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <input
+                              type="range"
+                              min="0"
+                              max="100"
+                              step="5"
+                              value={goal.progress}
+                              onChange={(e) => handleUpdateGoalProgress(goal.memory_id, Number(e.target.value))}
+                              className="flex-1 h-2 bg-gray-200 dark:bg-gray-700 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-blue-500 [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-blue-500 [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
+                              style={{
+                                background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${goal.progress}%, rgb(229 231 235) ${goal.progress}%, rgb(229 231 235) 100%)`
+                              }}
+                            />
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium min-w-[3ch]">
                               {Math.round(goal.progress)}%
                             </span>
                           </div>

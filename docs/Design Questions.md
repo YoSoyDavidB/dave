@@ -42,7 +42,7 @@ Inicialmente sería solo para mí pero quiero construirlo de manera que pueda se
 ### ¿Conversación tipo chat o más como comandos/acciones?
 
 **Respuesta:**
-Tipo chat para que sea una interacción más natura, en el futuro también podría pensar en incluir funcionalidad de voz para que sea una interacción más natural 
+Tipo chat para que sea una interacción más natura, en el futuro también podría pensar en incluir funcionalidad de voz para que sea una interacción más natural
 
 ### ¿Quieres que el agente tenga "personalidad" (nombre, tono específico)?
 

@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import structlog
@@ -42,7 +42,7 @@ async def get_recent_corrections(days: int = 7, limit: int = 20) -> list[English
     """Get recent corrections."""
     try:
         async with async_session() as session:
-            since = datetime.utcnow() - timedelta(days=days)
+            since = datetime.now(UTC) - timedelta(days=days)
             result = await session.execute(
                 select(EnglishCorrection)
                 .where(EnglishCorrection.created_at >= since)
@@ -88,7 +88,7 @@ async def get_error_stats() -> dict[str, Any]:
             by_category = {row[0]: row[1] for row in category_result.all()}
 
             # Last 7 days
-            week_ago = datetime.utcnow() - timedelta(days=7)
+            week_ago = datetime.now(UTC) - timedelta(days=7)
             week_result = await session.execute(
                 select(func.count(EnglishCorrection.id)).where(
                     EnglishCorrection.created_at >= week_ago

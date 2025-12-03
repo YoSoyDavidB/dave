@@ -1,7 +1,7 @@
 """Extract memories and tasks from vault notes."""
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, cast
 
 import httpx
@@ -99,7 +99,7 @@ class VaultMemoryExtraction:
             return datetime.fromisoformat(date_str)
 
         # Default to today
-        return datetime.utcnow()
+        return datetime.now(UTC)
 
     def _extract_checkboxes_from_content(self, content: str) -> list[str]:
         """Extract uncompleted checkboxes from markdown content.
@@ -119,6 +119,94 @@ class VaultMemoryExtraction:
                     tasks.append(task_text)
 
         return tasks
+
+    def _extract_completed_checkboxes(self, content: str) -> list[str]:
+        """Extract completed checkboxes from markdown content.
+
+        Returns:
+            List of completed task texts (without the checkbox prefix)
+        """
+        completed_tasks = []
+        # Match completed checkboxes: - [x] Task text or - [X] Task text
+        pattern = r"^[\s]*-\s*\[[xX]\]\s*(.+)$"
+
+        for line in content.split("\n"):
+            match = re.match(pattern, line)
+            if match:
+                task_text = match.group(1).strip()
+                if task_text:
+                    completed_tasks.append(task_text)
+
+        return completed_tasks
+
+    async def _mark_vault_tasks_completed(
+        self,
+        user_id: str,
+        completed_task_texts: list[str],
+    ) -> int:
+        """Mark tasks as completed based on vault checkbox status.
+
+        Finds existing TASK memories that match the completed task texts
+        and marks them as completed.
+
+        Args:
+            user_id: User ID
+            completed_task_texts: List of task texts that are marked complete in vault
+
+        Returns:
+            Number of tasks marked as completed
+        """
+        if not completed_task_texts:
+            return 0
+
+        try:
+            # Get all user's task memories
+            all_tasks = await self._memory_repo.get_by_type(
+                user_id=user_id,
+                memory_type=MemoryType.TASK,
+            )
+
+            marked_count = 0
+            for task in all_tasks:
+                # Skip already completed tasks
+                if task.completed:
+                    continue
+
+                # Check if this task's text matches any completed task
+                task_text_lower = task.short_text.lower().strip()
+                for completed_text in completed_task_texts:
+                    # Fuzzy match: if the task text contains the completed text or vice versa
+                    # This handles minor variations in task description
+                    completed_lower = completed_text.lower().strip()
+                    if (
+                        task_text_lower == completed_lower
+                        or completed_lower in task_text_lower
+                        or task_text_lower in completed_lower
+                    ):
+                        # Mark as completed
+                        task.mark_completed()
+                        await self._memory_repo.update(task)
+                        marked_count += 1
+                        logger.info(
+                            "vault_task_marked_completed",
+                            task_text=task.short_text,
+                            memory_id=str(task.memory_id),
+                        )
+                        break  # Move to next task
+
+            if marked_count > 0:
+                logger.info(
+                    "vault_tasks_completed_sync",
+                    user_id=user_id,
+                    marked_count=marked_count,
+                    total_completed=len(completed_task_texts),
+                )
+
+            return marked_count
+
+        except Exception as e:
+            logger.error("mark_vault_tasks_failed", user_id=user_id, error=str(e))
+            return 0
 
     async def extract_from_daily_note(
         self,
@@ -149,16 +237,24 @@ class VaultMemoryExtraction:
             note_date = self._extract_note_date(path, content)
 
             # Skip if note is too old (more than 7 days)
-            days_old = (datetime.utcnow() - note_date).days
+            days_old = (datetime.now(UTC) - note_date).days
             if days_old > 7:
                 logger.debug("vault_note_too_old", path=path, days_old=days_old)
                 return []
 
             # First, try to extract checkboxes directly with regex (faster and more reliable)
             checkbox_tasks = self._extract_checkboxes_from_content(content)
-            print(f"[DEBUG] Found {len(checkbox_tasks)} checkboxes in {path}")
+            print(f"[DEBUG] Found {len(checkbox_tasks)} uncompleted checkboxes in {path}")
             if checkbox_tasks:
-                print(f"[DEBUG] Checkbox tasks: {checkbox_tasks[:3]}...")  # Print first 3
+                print(f"[DEBUG] Uncompleted tasks: {checkbox_tasks[:3]}...")  # Print first 3
+
+            # Also extract completed checkboxes to mark them as done
+            completed_tasks = self._extract_completed_checkboxes(content)
+            print(f"[DEBUG] Found {len(completed_tasks)} completed checkboxes in {path}")
+            if completed_tasks:
+                print(f"[DEBUG] Completed tasks: {completed_tasks[:3]}...")
+                # Mark these tasks as completed in existing memories
+                await self._mark_vault_tasks_completed(user_id, completed_tasks)
 
             # If we found checkboxes, use them directly
             if checkbox_tasks:
@@ -374,7 +470,7 @@ class VaultMemoryExtraction:
             # We'll search for recent dates to find daily notes
             from datetime import datetime, timedelta
 
-            today = datetime.utcnow()
+            today = datetime.now(UTC)
             search_queries = []
 
             # Generate search queries for the last 7 days

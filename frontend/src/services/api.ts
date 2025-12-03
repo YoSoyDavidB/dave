@@ -484,6 +484,29 @@ export async function searchRAG(
   return response.json()
 }
 
+/**
+ * Get indexed vault documents
+ */
+export interface VaultDocument {
+  path: string
+  title: string
+  chunk_count: number
+  last_modified: string | null
+}
+
+export interface VaultDocumentListResponse {
+  documents: VaultDocument[]
+  total: number
+}
+
+export async function getIndexedVaultDocuments(): Promise<VaultDocumentListResponse> {
+  const response = await fetch(`${API_BASE_URL}/rag/vault/documents`, defaultFetchOptions)
+  if (!response.ok) {
+    throw new Error('Failed to fetch vault documents')
+  }
+  return response.json()
+}
+
 // ============================================
 // MEMORY API
 // ============================================
@@ -760,4 +783,127 @@ export async function getDocumentCategories(): Promise<CategoryInfo[]> {
   }
   const data = await response.json()
   return data.categories
+}
+
+// ============================================
+// PROACTIVE FEATURES API
+// ============================================
+
+export interface Reminder {
+  memory_id: string
+  task_text: string
+  due_date: string
+  is_overdue: boolean
+  hours_until_due: number
+}
+
+export interface RemindersResponse {
+  reminders: Reminder[]
+  count: number
+}
+
+export interface Goal {
+  memory_id: string
+  goal_text: string
+  progress: number
+  last_referenced: string
+  created_at: string
+}
+
+export interface GoalsResponse {
+  goals: Goal[]
+  count: number
+}
+
+export interface Task {
+  memory_id: string
+  task_text: string
+  due_date: string | null
+  created_at: string
+  source: string
+}
+
+export interface TasksResponse {
+  tasks: Task[]
+  count: number
+}
+
+/**
+ * Get pending task reminders
+ */
+export async function getReminders(): Promise<RemindersResponse> {
+  const response = await fetch(`${API_BASE_URL}/proactive/reminders`, defaultFetchOptions)
+  if (!response.ok) {
+    throw new Error('Failed to fetch reminders')
+  }
+  return response.json()
+}
+
+/**
+ * Get active goals with progress tracking
+ */
+export async function getActiveGoals(): Promise<GoalsResponse> {
+  const response = await fetch(`${API_BASE_URL}/proactive/goals`, defaultFetchOptions)
+  if (!response.ok) {
+    throw new Error('Failed to fetch goals')
+  }
+  return response.json()
+}
+
+/**
+ * Get all pending tasks
+ */
+export async function getPendingTasks(): Promise<TasksResponse> {
+  const response = await fetch(`${API_BASE_URL}/proactive/tasks`, defaultFetchOptions)
+  if (!response.ok) {
+    throw new Error('Failed to fetch tasks')
+  }
+  return response.json()
+}
+
+/**
+ * Mark a task as completed
+ */
+export async function markTaskCompleted(memoryId: string): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/proactive/tasks/complete`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ memory_id: memoryId }),
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
+    throw new Error(error.detail || 'Failed to mark task completed')
+  }
+}
+
+/**
+ * Update a goal's progress percentage
+ */
+export async function updateGoalProgress(goalId: string, progress: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/proactive/goals/${goalId}/progress`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ progress }),
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
+    throw new Error(error.detail || 'Failed to update goal progress')
+  }
+}
+
+/**
+ * Sync tasks from vault daily notes
+ */
+export async function syncVaultTasks(): Promise<{ status: string; message: string; count: number }> {
+  const response = await fetch(`${API_BASE_URL}/proactive/sync-vault-tasks`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+  })
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ detail: 'Unknown error' }))
+    throw new Error(error.detail || 'Failed to sync vault tasks')
+  }
+  return response.json()
 }
