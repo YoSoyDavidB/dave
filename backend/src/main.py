@@ -7,6 +7,7 @@ from src.api.routes import (
     auth,
     chat,
     conversations,
+    dashboard,
     documents,
     english,
     health,
@@ -108,6 +109,7 @@ def create_app() -> FastAPI:
     app.include_router(rag.router, prefix=settings.api_prefix)
     app.include_router(documents.router, prefix=settings.api_prefix)
     app.include_router(proactive.router, prefix=settings.api_prefix + "/proactive")
+    app.include_router(dashboard.router, prefix=settings.api_prefix)
 
     @app.on_event("startup")
     async def startup_event() -> None:

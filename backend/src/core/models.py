@@ -1,8 +1,8 @@
 import uuid
-from datetime import datetime
+from datetime import date, datetime
 from enum import Enum
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, Text
+from sqlalchemy import JSON, Boolean, Date, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.infrastructure.database import Base
@@ -111,3 +111,44 @@ class Message(Base):
 
     def __repr__(self) -> str:
         return f"<Message {self.id}: {self.role} - {self.content[:30]}...>"
+
+
+class DailySummaryModel(Base):
+    """Model for storing daily summaries and insights."""
+
+    __tablename__ = "daily_summaries"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+
+    # Task metrics
+    tasks_completed: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tasks_created: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    tasks_pending: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # Goal metrics
+    goals_updated: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    goals_progress_delta: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+
+    # Conversation metrics
+    conversations_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    messages_sent: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # English learning metrics
+    english_corrections: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    # Productivity score
+    productivity_score: Mapped[float] = mapped_column(Float, default=0.0, nullable=False)
+
+    # AI-generated insights
+    top_topics: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    key_achievements: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    suggestions: Mapped[list] = mapped_column(JSON, default=list, nullable=False)
+    summary_text: Mapped[str] = mapped_column(Text, default="", nullable=False)
+
+    # Metadata
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<DailySummary {self.id}: {self.user_id} - {self.date}>"

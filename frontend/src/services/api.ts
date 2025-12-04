@@ -907,3 +907,93 @@ export async function syncVaultTasks(): Promise<{ status: string; message: strin
   }
   return response.json()
 }
+
+// ============================================
+// DASHBOARD & INSIGHTS API
+// ============================================
+
+export interface DailySummary {
+  summary_id: string
+  user_id: string
+  date: string
+  tasks_completed: number
+  tasks_created: number
+  tasks_pending: number
+  goals_updated: string[]
+  goals_progress_delta: number
+  conversations_count: number
+  messages_sent: number
+  english_corrections: number
+  productivity_score: number
+  top_topics: string[]
+  key_achievements: string[]
+  suggestions: string[]
+  summary_text: string
+  created_at: string
+}
+
+export interface DashboardStats {
+  today_summary: DailySummary | null
+  week_productivity_avg: number
+  week_tasks_completed: number
+  week_conversations: number
+  productivity_trend: Array<{ date: string; score: number }>
+  tasks_trend: Array<{ date: string; completed: number; created: number }>
+}
+
+/**
+ * Get today's daily summary
+ */
+export async function getTodaySummary(userId: string): Promise<DailySummary | null> {
+  const response = await fetch(
+    `${API_BASE_URL}/dashboard/summary/today?user_id=${userId}`,
+    defaultFetchOptions
+  )
+  if (response.status === 404) {
+    return null
+  }
+  if (!response.ok) {
+    throw new Error('Failed to fetch today summary')
+  }
+  return response.json()
+}
+
+/**
+ * Get dashboard statistics
+ */
+export async function getDashboardStats(userId: string): Promise<DashboardStats> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/stats?user_id=${userId}`, defaultFetchOptions)
+  if (!response.ok) {
+    throw new Error('Failed to fetch dashboard stats')
+  }
+  return response.json()
+}
+
+/**
+ * Get week summaries (last 7 days)
+ */
+export async function getWeekSummaries(userId: string): Promise<DailySummary[]> {
+  const response = await fetch(`${API_BASE_URL}/dashboard/summary/week?user_id=${userId}`, defaultFetchOptions)
+  if (!response.ok) {
+    throw new Error('Failed to fetch week summaries')
+  }
+  return response.json()
+}
+
+/**
+ * Generate daily summary manually
+ */
+export async function generateDailySummary(userId: string, date?: string): Promise<DailySummary> {
+  const url = date
+    ? `${API_BASE_URL}/dashboard/summary/generate?user_id=${userId}&date_str=${date}`
+    : `${API_BASE_URL}/dashboard/summary/generate?user_id=${userId}`
+
+  const response = await fetch(url, {
+    ...defaultFetchOptions,
+    method: 'POST',
+  })
+  if (!response.ok) {
+    throw new Error('Failed to generate summary')
+  }
+  return response.json()
+}
