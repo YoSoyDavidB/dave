@@ -40,6 +40,7 @@ async def init_db() -> None:
         Conversation,
         DailySummaryModel,
         EnglishCorrection,
+        FocusSessionModel,
         Message,
         User,
     )

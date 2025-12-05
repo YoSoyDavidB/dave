@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { useAuthStore } from '../stores/authStore'
 import { getDashboardStats, generateDailySummary, type DashboardStats, type DailySummary } from '../services/api'
+import FocusTimer from '../components/focus/FocusTimer'
 
 export default function Dashboard() {
   const { user } = useAuthStore()
@@ -183,6 +184,50 @@ export default function Dashboard() {
           icon={Target}
           color="text-[#F0FF3D]"
         />
+      </div>
+
+      {/* Focus Mode Timer */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1">
+          <FocusTimer />
+        </div>
+
+        {/* Quick Stats Section */}
+        <div className="lg:col-span-2 space-y-4">
+          {todaySummary && todaySummary.key_achievements.length > 0 && (
+            <div className="glass-card p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Trophy size={20} className="text-yellow-400" />
+                Today's Achievements
+              </h3>
+              <ul className="space-y-2">
+                {todaySummary.key_achievements.slice(0, 3).map((achievement, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-zinc-300">
+                    <CheckCircle2 size={16} className="text-green-400 mt-0.5 flex-shrink-0" />
+                    <span>{achievement}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {todaySummary && todaySummary.suggestions.length > 0 && (
+            <div className="glass-card p-6">
+              <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                <Lightbulb size={20} className="text-[#F0FF3D]" />
+                Suggestions for Today
+              </h3>
+              <ul className="space-y-2">
+                {todaySummary.suggestions.slice(0, 3).map((suggestion, idx) => (
+                  <li key={idx} className="flex items-start gap-2 text-zinc-300">
+                    <span className="text-[#F0FF3D] mt-0.5 flex-shrink-0">→</span>
+                    <span>{suggestion}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Productivity Trend */}

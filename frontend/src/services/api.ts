@@ -997,3 +997,148 @@ export async function generateDailySummary(userId: string, date?: string): Promi
   }
   return response.json()
 }
+
+// ============================================
+// Focus Session Types
+// ============================================
+
+export interface FocusSession {
+  session_id: string
+  user_id: string
+  task_id: string | null
+  session_type: string
+  status: string
+  duration_minutes: number
+  elapsed_seconds: number
+  remaining_seconds: number
+  started_at: string
+  paused_at: string | null
+  completed_at: string | null
+  notes: string
+  interruptions: number
+  created_at: string
+}
+
+export interface SessionStats {
+  total_sessions: number
+  completed_sessions: number
+  total_focus_time_minutes: number
+  average_interruptions: number
+}
+
+// ============================================
+// Focus Session API Functions
+// ============================================
+
+export async function startFocusSession(
+  userId: string,
+  taskId?: string,
+  durationMinutes: number = 25
+): Promise<FocusSession> {
+  const response = await fetch(`${API_BASE_URL}/focus/start?user_id=${userId}`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      task_id: taskId,
+      duration_minutes: durationMinutes,
+      session_type: 'pomodoro',
+    }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new Error(error.detail || 'Failed to start focus session')
+  }
+
+  return response.json()
+}
+
+export async function getActiveSession(userId: string): Promise<FocusSession | null> {
+  const response = await fetch(`${API_BASE_URL}/focus/active?user_id=${userId}`, defaultFetchOptions)
+
+  if (!response.ok) {
+    throw new Error('Failed to get active session')
+  }
+
+  const data = await response.json()
+  return data || null
+}
+
+export async function pauseSession(sessionId: string, userId: string): Promise<FocusSession> {
+  const response = await fetch(`${API_BASE_URL}/focus/${sessionId}/pause?user_id=${userId}`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to pause session')
+  }
+
+  return response.json()
+}
+
+export async function resumeSession(sessionId: string, userId: string): Promise<FocusSession> {
+  const response = await fetch(`${API_BASE_URL}/focus/${sessionId}/resume?user_id=${userId}`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to resume session')
+  }
+
+  return response.json()
+}
+
+export async function completeSession(
+  sessionId: string,
+  userId: string,
+  notes: string = ''
+): Promise<FocusSession> {
+  const response = await fetch(`${API_BASE_URL}/focus/${sessionId}/complete?user_id=${userId}`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ notes }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to complete session')
+  }
+
+  return response.json()
+}
+
+export async function cancelSession(sessionId: string, userId: string): Promise<FocusSession> {
+  const response = await fetch(`${API_BASE_URL}/focus/${sessionId}/cancel?user_id=${userId}`, {
+    ...defaultFetchOptions,
+    method: 'POST',
+  })
+
+  if (!response.ok) {
+    throw new Error('Failed to cancel session')
+  }
+
+  return response.json()
+}
+
+export async function getSessionHistory(userId: string, limit: number = 10): Promise<FocusSession[]> {
+  const response = await fetch(`${API_BASE_URL}/focus/history?user_id=${userId}&limit=${limit}`, defaultFetchOptions)
+
+  if (!response.ok) {
+    throw new Error('Failed to get session history')
+  }
+
+  return response.json()
+}
+
+export async function getSessionStats(userId: string): Promise<SessionStats> {
+  const response = await fetch(`${API_BASE_URL}/focus/stats?user_id=${userId}`, defaultFetchOptions)
+
+  if (!response.ok) {
+    throw new Error('Failed to get session stats')
+  }
+
+  return response.json()
+}

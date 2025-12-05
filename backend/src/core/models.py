@@ -152,3 +152,36 @@ class DailySummaryModel(Base):
 
     def __repr__(self) -> str:
         return f"<DailySummary {self.id}: {self.user_id} - {self.date}>"
+
+
+class FocusSessionModel(Base):
+    """Model for storing focus sessions."""
+
+    __tablename__ = "focus_sessions"
+
+    id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
+    task_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Session type and status
+    session_type: Mapped[str] = mapped_column(String(20), default="pomodoro", nullable=False)
+    status: Mapped[str] = mapped_column(String(20), default="active", nullable=False, index=True)
+
+    # Time tracking
+    duration_minutes: Mapped[int] = mapped_column(Integer, default=25, nullable=False)
+    elapsed_seconds: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    paused_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    completed_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+    # Notes and metadata
+    notes: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    interruptions: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False
+    )
+
+    def __repr__(self) -> str:
+        return f"<FocusSession {self.id}: {self.user_id} - {self.status}>"
