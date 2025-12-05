@@ -45,7 +45,10 @@ export default function FocusTimer() {
   }, [session])
 
   const loadActiveSession = async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
