@@ -14,6 +14,7 @@ from src.api.routes import (
     health,
     proactive,
     rag,
+    tasks,
 )
 from src.config import get_settings
 from src.infrastructure.database import init_db
@@ -112,6 +113,7 @@ def create_app() -> FastAPI:
     app.include_router(proactive.router, prefix=settings.api_prefix + "/proactive")
     app.include_router(dashboard.router, prefix=settings.api_prefix)
     app.include_router(focus.router, prefix=settings.api_prefix)
+    app.include_router(tasks.router, prefix=settings.api_prefix)
 
     @app.on_event("startup")
     async def startup_event() -> None:

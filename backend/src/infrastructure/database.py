@@ -42,6 +42,7 @@ async def init_db() -> None:
         EnglishCorrection,
         FocusSessionModel,
         Message,
+        TaskModel,
         User,
     )
 
